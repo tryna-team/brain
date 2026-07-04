@@ -1,15 +1,11 @@
-from neo4j import GraphDatabase
-from app.config import settings
+from app.graph.neo4j_client import neo4j_client
 
-# URI examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
-URI = settings.NEO4J_URI
-AUTH = (settings.NEO4J_USERNAME, settings.NEO4J_PASSWORD)
+neo4j_client.connect()
+neo4j_client.verify_connectivity()
 
-with GraphDatabase.driver(URI, auth=AUTH) as driver:
-    driver.verify_connectivity()
+records, summary, keys = neo4j_client.driver.execute_query(
+    "RETURN 'Hello tryna' AS message"
+)
 
-    records, summary, keys = driver.execute_query(
-        "RETURN 'Hello tryna' AS message"
-    )
-
-    print(records[0]["message"])
+print(records[0]["message"])
+neo4j_client.close()
