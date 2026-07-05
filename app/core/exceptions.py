@@ -1,4 +1,4 @@
-from app.global_exception.error_code import ErrorCode
+from app.core.error_code import ErrorCode
 
 
 class BusinessException(Exception):

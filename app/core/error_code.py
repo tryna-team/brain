@@ -12,3 +12,20 @@ class ErrorCode(Enum):
     def __init__(self, status: HTTPStatus, message: str):
         self.status = status
         self.message = message
+
+    @property
+    def http_status(self) -> HTTPStatus:
+        return self.status
+
+
+class SuccessCode(Enum):
+    OK = (HTTPStatus.OK, "요청이 성공했습니다.")
+    CREATED = (HTTPStatus.CREATED, "요청이 성공했습니다.")
+
+    def __init__(self, status: HTTPStatus, message: str):
+        self.status = status
+        self.message = message
+
+    @property
+    def http_status(self) -> HTTPStatus:
+        return self.status

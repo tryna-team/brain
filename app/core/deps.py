@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastapi import Depends
+
+from app.graph.neo4j_client import Neo4jClient, neo4j_client
+
+
+def get_neo4j_client() -> Neo4jClient:
+    return neo4j_client
+
+
+Neo4jClientDep = Annotated[Neo4jClient, Depends(get_neo4j_client)]
+
+
+# TODO: ParserService 의존성 주입 (C101/C102 자연어 일정 1차 파싱 구현 후 활성화)
+# def get_parser_service() -> ParserService:
+#     ...
+# ParserServiceDep = Annotated[ParserService, Depends(get_parser_service)]
+
+
+# TODO: RecommendationService 의존성 주입 (parser → graph → llm → recommender 파이프라인 구현 후 활성화)
+# def get_recommendation_service() -> RecommendationService:
+#     ...
+# RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
+
+
+# TODO: LLMService 의존성 주입 (Upstage LLM 연동 구현 후 활성화)
+# def get_llm_service() -> LLMService:
+#     ...
+# LLMServiceDep = Annotated[LLMService, Depends(get_llm_service)]
