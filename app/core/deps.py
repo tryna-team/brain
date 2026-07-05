@@ -25,23 +25,52 @@ RecommendationRepoDep = Annotated["RecommendationRepo", Depends(get_recommendati
 
 # TODO: ScheduleContextRepo 의존성 주입 (일정 맥락 조회 구현 후 활성화)
 # def get_schedule_context_repo(client: Neo4jClientDep) -> ScheduleContextRepo:
+#     from app.graph.repositories.schedule_context_repo import ScheduleContextRepo
+#
 #     return ScheduleContextRepo(client.driver)
+#
 # ScheduleContextRepoDep = Annotated[ScheduleContextRepo, Depends(get_schedule_context_repo)]
 
 
 # TODO: ParserService 의존성 주입 (C101/C102 자연어 일정 1차 파싱 구현 후 활성화)
 # def get_parser_service() -> ParserService:
-#     ...
+#     from app.services.parser_service import ParserService
+#
+#     return ParserService()
+#
 # ParserServiceDep = Annotated[ParserService, Depends(get_parser_service)]
 
 
+# TODO: ScheduleContextService 의존성 주입 (Neo4j 맥락 분석 구현 후 활성화)
+# def get_schedule_context_service(
+#     repo: ScheduleContextRepoDep,
+# ) -> ScheduleContextService:
+#     from app.services.schedule_context_service import ScheduleContextService
+#
+#     return ScheduleContextService(repo=repo)
+#
+# ScheduleContextServiceDep = Annotated[ScheduleContextService, Depends(get_schedule_context_service)]
+
+
 # TODO: RecommendationService 의존성 주입 (parser → graph → llm → recommender 파이프라인 구현 후 활성화)
-# def get_recommendation_service() -> RecommendationService:
-#     ...
+# def get_recommendation_service(
+#     parser_service: ParserServiceDep,
+#     recommendation_repo: RecommendationRepoDep,
+# ) -> RecommendationService:
+#     from app.services.recommendation_service import RecommendationService
+#
+#     return RecommendationService(
+#         parser_service=parser_service,
+#         recommendation_repo=recommendation_repo,
+#     )
+#
 # RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
 
 
 # TODO: LLMService 의존성 주입 (Upstage LLM 연동 구현 후 활성화)
 # def get_llm_service() -> LLMService:
-#     ...
+#     from app.services.llm_service import LLMService
+#
+#     return LLMService()
+#
 # LLMServiceDep = Annotated[LLMService, Depends(get_llm_service)]

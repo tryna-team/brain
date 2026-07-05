@@ -8,6 +8,7 @@ class ErrorCode(Enum):
     COMMON_422 = (HTTPStatus.UNPROCESSABLE_ENTITY, "요청값 검증에 실패했습니다.")
     COMMON_500 = (HTTPStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.")
     NEO4J_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "Neo4j 연결을 사용할 수 없습니다.")
+    LLM_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "LLM 연동을 사용할 수 없습니다.")
 
     def __init__(self, status: HTTPStatus, message: str):
         self.status = status
