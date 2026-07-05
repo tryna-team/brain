@@ -14,6 +14,21 @@ def get_neo4j_client() -> Neo4jClient:
 Neo4jClientDep = Annotated[Neo4jClient, Depends(get_neo4j_client)]
 
 
+def get_recommendation_repo(client: Neo4jClientDep) -> "RecommendationRepo":
+    from app.graph.repositories.recommendation_repo import RecommendationRepo
+
+    return RecommendationRepo(client.driver)
+
+
+RecommendationRepoDep = Annotated["RecommendationRepo", Depends(get_recommendation_repo)]
+
+
+# TODO: ScheduleContextRepo 의존성 주입 (일정 맥락 조회 구현 후 활성화)
+# def get_schedule_context_repo(client: Neo4jClientDep) -> ScheduleContextRepo:
+#     return ScheduleContextRepo(client.driver)
+# ScheduleContextRepoDep = Annotated[ScheduleContextRepo, Depends(get_schedule_context_repo)]
+
+
 # TODO: ParserService 의존성 주입 (C101/C102 자연어 일정 1차 파싱 구현 후 활성화)
 # def get_parser_service() -> ParserService:
 #     ...
