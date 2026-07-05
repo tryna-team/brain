@@ -11,6 +11,7 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/parse", tags=["parse"])
 
 
+# 참고용 입니다!!!!
 # TODO: C101/C102 자연어 일정 1차 파싱 API 구현
 # @router.post(
 #     "",

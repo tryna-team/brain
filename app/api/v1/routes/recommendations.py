@@ -11,6 +11,7 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
 
+# 참고용 입니다!!!!
 # TODO: D102~D105 일정 준비/실행 항목 추천 API 구현
 # @router.post(
 #     "",

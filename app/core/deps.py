@@ -23,6 +23,7 @@ def get_recommendation_repo(client: Neo4jClientDep) -> "RecommendationRepo":
 RecommendationRepoDep = Annotated["RecommendationRepo", Depends(get_recommendation_repo)]
 
 
+# 참고용 입니다!!!! 이런 코드가 있으면 좋을 것 같다는 의견!! 입니다!
 # TODO: ScheduleContextRepo 의존성 주입 (일정 맥락 조회 구현 후 활성화)
 # def get_schedule_context_repo(client: Neo4jClientDep) -> ScheduleContextRepo:
 #     from app.graph.repositories.schedule_context_repo import ScheduleContextRepo

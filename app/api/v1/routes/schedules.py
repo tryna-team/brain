@@ -11,6 +11,7 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/schedules", tags=["schedules"])
 
 
+# 참고용 입니다!!!!
 # TODO: 일정 맥락 분석 API 구현 (Neo4j 기반 맥락 구조화)
 # @router.post(
 #     "/context",
