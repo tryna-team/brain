@@ -1,8 +1,8 @@
 from neo4j import Driver, GraphDatabase
 
 from app.config import settings
-from app.global_exception.error_code import ErrorCode
-from app.global_exception.exceptions import BusinessException
+from app.core.error_code import ErrorCode
+from app.core.exceptions import BusinessException
 
 
 class Neo4jClient:
