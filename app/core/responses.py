@@ -1,5 +1,6 @@
 from typing import Generic, TypeVar
 
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.core.error_code import SuccessCode
@@ -36,9 +37,13 @@ def success_response(
     result: T | None = None,
     success_code: SuccessCode = SuccessCode.OK,
     message: str | None = None,
-) -> ApiResponse[T]:
-    return ApiResponse.ok(
+) -> JSONResponse:
+    body = ApiResponse.ok(
         data=result,
         code=success_code.name,
         message=message or success_code.message,
+    )
+    return JSONResponse(
+        status_code=success_code.http_status.value,
+        content=body.model_dump(mode="json"),
     )
