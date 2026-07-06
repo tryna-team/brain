@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.graph.neo4j_client import Neo4jClient, neo4j_client
+from app.graph.repositories.recommendation_repo import RecommendationRepo
 
 
 def get_neo4j_client() -> Neo4jClient:
@@ -14,13 +15,11 @@ def get_neo4j_client() -> Neo4jClient:
 Neo4jClientDep = Annotated[Neo4jClient, Depends(get_neo4j_client)]
 
 
-def get_recommendation_repo(client: Neo4jClientDep) -> "RecommendationRepo":
-    from app.graph.repositories.recommendation_repo import RecommendationRepo
-
+def get_recommendation_repo(client: Neo4jClientDep) -> RecommendationRepo:
     return RecommendationRepo(client.driver)
 
 
-RecommendationRepoDep = Annotated["RecommendationRepo", Depends(get_recommendation_repo)]
+RecommendationRepoDep = Annotated[RecommendationRepo, Depends(get_recommendation_repo)]
 
 
 # 참고용 입니다!!!! 이런 코드가 있으면 좋을 것 같다는 의견!! 입니다!
