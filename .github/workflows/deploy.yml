@@ -1,0 +1,138 @@
+name: tryna Brain Prod CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # main에 대한 PR은 ci.yml이 Actions 체크로 이미 검증하지만, 직접 push(머지 포함)로
+  # 워크플로가 트리거될 때도 동일한 CI를 한 번 더 게이트로 실행해 "CI 성공 후 배포"를 보장한다.
+  prod-CICD:
+    uses: ./.github/workflows/ci.yml
+
+  build-and-deploy:
+    needs: prod-CICD
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPOSITORY }}
+      ECS_CLUSTER: ${{ secrets.AWS_ECS_CLUSTER }}
+      ECS_SERVICE: ${{ secrets.AWS_ECS_SERVICE }}
+      ECS_TASK_DEFINITION_FAMILY: ${{ secrets.AWS_ECS_TASK_DEFINITION_FAMILY }}
+      CONTAINER_NAME: ${{ secrets.AWS_CONTAINER_NAME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # AWS 인증
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ECR 로그인
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 이미지 누적으로 인한 ECS 메모리/스토리지 부족 방지: 최근 3개 초과 이미지는 자동 만료
+      - name: Apply ECR lifecycle policy (keep latest 3 images)
+        run: |
+          aws ecr put-lifecycle-policy \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --lifecycle-policy-text file://.github/ecr/lifecycle-policy.json
+
+      # Docker 이미지 빌드 & 푸시
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      # 롤백 전략을 위해, 이번에 교체될 "현재(=배포 실패 시 되돌아갈 이전)" 리비전을 미리 기록
+      - name: Capture current task definition ARN (rollback target)
+        id: previous-task-def
+        run: |
+          ARN=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} \
+            --query "taskDefinition.taskDefinitionArn" \
+            --output text)
+          echo "arn=$ARN" >> "$GITHUB_OUTPUT"
+
+      # 현재 Task Definition 다운로드 (렌더링 베이스)
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} \
+            --query taskDefinition \
+            > task-definition.json
+
+      # 새 이미지 + 환경변수로 Task Definition 갱신
+      - name: Render new task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+          environment-variables: |
+            APP_ENV=prod
+            NEO4J_URI=${{ secrets.NEO4J_URI }}
+            NEO4J_USERNAME=${{ secrets.NEO4J_USERNAME }}
+            NEO4J_PASSWORD=${{ secrets.NEO4J_PASSWORD }}
+            NEO4J_DATABASE=${{ secrets.NEO4J_DATABASE }}
+            UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}
+
+      # ECS 배포 (새 리비전 등록 + 서비스 업데이트 + 안정화 대기)
+      - name: Deploy to Amazon ECS
+        id: deploy
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      # 배포(안정화 대기 포함)가 실패하면 직전에 기록해 둔 이전 리비전으로 즉시 되돌린다.
+      - name: Rollback to previous task definition on failure
+        if: failure() && steps.previous-task-def.outputs.arn != ''
+        run: |
+          echo "::warning::배포 실패 감지, 이전 태스크 정의로 롤백합니다: ${{ steps.previous-task-def.outputs.arn }}"
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ steps.previous-task-def.outputs.arn }} \
+            --force-new-deployment
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }}
+
+      # 요약
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ steps.build-image.outputs.image }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cluster**: ${{ env.ECS_CLUSTER }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service**: ${{ env.ECS_SERVICE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            echo "- **Result**: 정상 배포 완료" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Result**: 배포 실패 → 이전 리비전(${{ steps.previous-task-def.outputs.arn }})으로 롤백됨" >> $GITHUB_STEP_SUMMARY
+          fi
