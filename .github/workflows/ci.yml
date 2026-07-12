@@ -60,6 +60,7 @@ jobs:
           NEO4J_DATABASE: neo4j
           APP_ENV: local
           UPSTAGE_API_KEY: ci-dummy-upstage-api-key
+          INTERNAL_API_KEY: ci-dummy-internal-api-key
         run: |
           set -euo pipefail
           LOG=/tmp/tryna-brain-boot.log
