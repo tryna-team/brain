@@ -1,0 +1,107 @@
+name: tryna Brain CI
+
+# main/develop으로 향하는 PR에서 Actions 체크로 실행되고,
+# deploy.yml에서는 workflow_call로 재사용되어 "배포 전 CI 게이트" 역할도 겸한다.
+on:
+  pull_request:
+    branches: [ "main", "develop" ]
+  push:
+    branches: [ "develop" ]
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # 실제 배포 환경도 AuraDB(Neo4j)이므로, Neo4j 컨테이너로 기동 검증까지 수행한다.
+    services:
+      neo4j:
+        image: neo4j:5-community
+        env:
+          NEO4J_AUTH: neo4j/password
+        ports:
+          - 7687:7687
+          - 7474:7474
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check if branch is up-to-date with target branch
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          TARGET="${{ github.base_ref }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          git fetch origin "$TARGET":refs/remotes/origin/"$TARGET"
+
+          if [ "$(git merge-base "origin/$TARGET" "$HEAD_SHA")" != "$(git rev-parse "origin/$TARGET")" ]; then
+            echo "::error::현재 브랜치가 ${TARGET} 브랜치의 최신 커밋을 포함하고 있지 않습니다."
+            echo "::error::충돌 방지를 위해 ${TARGET} 브랜치를 먼저 현재 브랜치로 merge(또는 rebase) 해주세요."
+            exit 1
+          fi
+          echo "브랜치가 origin/${TARGET} 최신 상태를 포함하고 있습니다."
+
+      - name: Build Docker image
+        run: docker build -t tryna-brain:ci .
+
+      # Neo4j 컨테이너로 애플리케이션을 기동해 연결을 /api/v1/health로 검증한다.
+      - name: Boot application against Neo4j and verify /api/v1/health
+        env:
+          NEO4J_URI: neo4j://localhost:7687
+          NEO4J_USERNAME: neo4j
+          NEO4J_PASSWORD: password
+          NEO4J_DATABASE: neo4j
+          APP_ENV: local
+          UPSTAGE_API_KEY: ci-dummy-upstage-api-key
+          INTERNAL_API_KEY: ci-dummy-internal-api-key
+        run: |
+          set -euo pipefail
+          LOG=/tmp/tryna-brain-boot.log
+          : > "$LOG"
+          CONTAINER=tryna-brain-ci
+
+          CID="$(docker run -d --name "$CONTAINER" --network host \
+            -e NEO4J_URI="$NEO4J_URI" \
+            -e NEO4J_USERNAME="$NEO4J_USERNAME" \
+            -e NEO4J_PASSWORD="$NEO4J_PASSWORD" \
+            -e NEO4J_DATABASE="$NEO4J_DATABASE" \
+            -e APP_ENV="$APP_ENV" \
+            -e UPSTAGE_API_KEY="$UPSTAGE_API_KEY" \
+            -e INTERNAL_API_KEY="$INTERNAL_API_KEY" \
+            tryna-brain:ci)"
+          echo "$CID" >>"$LOG"
+
+          trap 'docker rm -f "$CONTAINER" 2>/dev/null || true' EXIT
+
+          code=""
+          for i in $(seq 1 60); do
+            if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null || echo false)" != "true" ]; then
+              echo "애플리케이션이 기동 중 종료되었습니다 (시도 $i)"
+              break
+            fi
+            code="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/health || true)"
+            if [ "$code" = "200" ]; then
+              echo "헬스체크 성공 (Neo4j 연결 정상)"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "헬스체크 실패 (마지막 HTTP 코드=${code:-n/a})"
+          echo "----- 애플리케이션 로그 (마지막 250줄) -----"
+          docker logs --tail 250 "$CONTAINER" 2>&1 | tee -a "$LOG" || true
+          exit 1

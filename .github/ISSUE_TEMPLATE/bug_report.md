@@ -1,27 +1,21 @@
-# Bug Report
+---
+name: Bug Issue Template
+about: 버그/문제를 해결하기 위한 이슈를 생성합니다.
+title: "[BUG] "
+---
 
-## Description
-버그에 대한 명확한 설명을 작성해주세요.
+## 🐞 버그 설명
+-
 
-## Steps to Reproduce
-재현 방법:
-1.
-2.
-3.
+## 📌 작업 상세 내용
+- [ ]
+- [ ]
 
-## Expected Behavior
-예상된 동작:
+## 🤔 기대한 동작 vs 🐞 실제 동작
+- 
 
-## Actual Behavior
-실제 동작:
+## 📱 환경 정보 (선택)
+- OS, 브라우저 등 버그 재현에 특정 환경이 영향을 미치는 경우에만 작성해주세요.
 
-## Screenshots
-필요한 경우 스크린샷을 첨부해주세요.
-
-## Environment
-- OS:
-- Python Version:
-- 기타:
-
-## Additional Context
-추가 정보가 있으면 작성해주세요.
+## 📝 참고 사항
+-

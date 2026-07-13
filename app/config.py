@@ -1,12 +1,24 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
 
-class Settings:
-    NEO4J_URI = os.getenv("NEO4J_URI")
-    NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
-    NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
-    NEO4J_DATABASE = os.getenv("NEO4J_DATABASE")
+class Settings(BaseSettings):
+    app_name: str = "Tryna Brain"
+    app_env: str = "local"
+    api_v1_prefix: str = "/api/v1"
+
+    neo4j_uri: str | None = None
+    neo4j_username: str | None = None
+    neo4j_password: str | None = None
+    neo4j_database: str | None = None
+
+    upstage_api_key: str | None = None
+    internal_api_key: str | None = None
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
 
 settings = Settings()
