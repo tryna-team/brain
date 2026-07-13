@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     neo4j_database: str | None = None
 
     upstage_api_key: str | None = None
+    internal_api_key: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

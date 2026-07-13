@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 
 from app.api.v1.router import api_router
 from app.config import settings
@@ -23,4 +24,11 @@ app = FastAPI(
 )
 
 register_exception_handlers(app)
+
+
+@app.get("/", response_class=PlainTextResponse)
+def ping() -> str:
+    return "OK"
+
+
 app.include_router(api_router, prefix=settings.api_v1_prefix)
