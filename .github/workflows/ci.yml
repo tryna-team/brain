@@ -37,6 +37,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check if branch is up-to-date with target branch
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          TARGET="${{ github.base_ref }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          git fetch origin "$TARGET":refs/remotes/origin/"$TARGET"
+
+          if [ "$(git merge-base "origin/$TARGET" "$HEAD_SHA")" != "$(git rev-parse "origin/$TARGET")" ]; then
+            echo "::error::현재 브랜치가 ${TARGET} 브랜치의 최신 커밋을 포함하고 있지 않습니다."
+            echo "::error::충돌 방지를 위해 ${TARGET} 브랜치를 먼저 현재 브랜치로 merge(또는 rebase) 해주세요."
+            exit 1
+          fi
+          echo "브랜치가 origin/${TARGET} 최신 상태를 포함하고 있습니다."
 
       - name: Build Docker image
         run: docker build -t tryna-brain:ci .
