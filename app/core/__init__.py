@@ -1,4 +1,4 @@
-from app.config import Settings, settings
+from app.core.config import Settings, settings
 from app.core.error_code import ErrorCode, SuccessCode
 from app.core.exceptions import BusinessException
 
