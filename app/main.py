@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 
 from app.api.v1.router import api_router
-from app.config import settings
+from app.core.config import settings
 from app.core.handlers import register_exception_handlers
 from app.graph.neo4j_client import neo4j_client
 
@@ -21,6 +21,9 @@ app = FastAPI(
     description="Tryna context intelligence engine",
     version="0.1.0",
     lifespan=lifespan,
+
+    # TODO_INFRA: 임시적 허용 범위 (추후 제거 예정)
+    root_path=settings.root_path,
 )
 
 register_exception_handlers(app)
