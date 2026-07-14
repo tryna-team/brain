@@ -40,7 +40,8 @@ jobs:
           fetch-depth: 0
 
       - name: Check if branch is up-to-date with target branch
-        if: github.event_name == 'pull_request'
+        # develop → main 머지 PR은 release 흐름이므로 up-to-date 검사를 생략한다.
+        if: github.event_name == 'pull_request' && !(github.base_ref == 'main' && github.head_ref == 'develop')
         run: |
           set -euo pipefail
           TARGET="${{ github.base_ref }}"
