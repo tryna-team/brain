@@ -58,6 +58,13 @@ jobs:
       - name: Build Docker image
         run: docker build -t tryna-brain:ci .
 
+      # /ai 접두사를 떼어내는 Nginx 사이드카 이미지도 함께 빌드해 Dockerfile/설정 오류를 조기에 발견한다.
+      - name: Build Nginx sidecar image
+        run: docker build -t tryna-brain-nginx:ci ./nginx
+
+      - name: Validate Nginx configuration syntax
+        run: docker run --rm tryna-brain-nginx:ci nginx -t
+
       # Neo4j 컨테이너로 애플리케이션을 기동해 연결을 /api/v1/health로 검증한다.
       - name: Boot application against Neo4j and verify /api/v1/health
         env:
