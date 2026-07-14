@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     app_name: str = "Tryna Brain"
     app_env: str = "local"
     api_v1_prefix: str = "/api/v1"
+    internal_api_key: str | None = None
 
     neo4j_uri: str | None = None
     neo4j_username: str | None = None
@@ -18,6 +19,7 @@ class Settings(BaseSettings):
     valkey_port: int = 6379
     valkey_db: int = 0
     valkey_key_prefix: str = "tryna:brain"
+    valkey_candidate_vector_ttl_seconds: int = 60 * 60 * 24 * 30
 
     model_config = SettingsConfigDict(
         env_file=".env",

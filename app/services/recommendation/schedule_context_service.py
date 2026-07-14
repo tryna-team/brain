@@ -50,7 +50,7 @@ class ScheduleContextService:
     
     # 캐시 key 생성
     def _candidate_cache_key(self, group: str, key: str) -> str:
-        return f"{settings.valkey_key_prefix}:d101:candidate_vector:{group}:{key}"
+        return f"{settings.valkey_key_prefix}:d101:v1:candidate_vector:{group}:{key}"
     
     # 후보 벡터 Valkey에서 읽기
     def _get_cached_vector(self, group: str, key: str) -> list[float] | None:
@@ -79,6 +79,7 @@ class ScheduleContextService:
             valkey_client.set(
                 self._candidate_cache_key(group, key),
                 json.dumps(vector),
+                ex=settings.valkey_candidate_vector_ttl_seconds,
             )
         except Exception:
             return
@@ -124,14 +125,14 @@ class ScheduleContextService:
 
         if best_score < threshold:
             return None, best_score
-
+        
         return best_key, best_score
     
     # context 후보 목록 찾기
     def _find_context_candidates(
         self,
         input_vector: list[float],
-        threshold: float = 0.75,
+        threshold: float = 0.52,
     ) -> list[str]:
         results: list[str] = []
 
@@ -146,11 +147,11 @@ class ScheduleContextService:
     
     # confidence 계산
     def _calculate_confidence(self, score: float) -> str:
-        if score >= 0.85:
-            return "high"
-        if score >= 0.75:
-            return "medium"
         if score >= 0.65:
+            return "high"
+        if score >= 0.58:
+            return "medium"
+        if score >= 0.55:
             return "low"
 
         return "unknown"
@@ -175,7 +176,7 @@ class ScheduleContextService:
             group="event_type",
             input_vector=input_vector,
             candidates=EVENT_TYPE_CANDIDATES,
-            threshold=0.65,
+            threshold=0.55,
         )
 
         place_type_key = None
@@ -186,7 +187,7 @@ class ScheduleContextService:
                 group="place_type",
                 input_vector=place_vector,
                 candidates=PLACE_TYPE_CANDIDATES,
-                threshold=0.65,
+                threshold=0.45,
             )
 
         context_keys = self._find_context_candidates(input_vector)
