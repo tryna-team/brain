@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 
 from app.api.v1.router import api_router
-from app.config import settings
+from app.core.config import settings
 from app.core.handlers import register_exception_handlers
 from app.graph.neo4j_client import neo4j_client
 

@@ -1,6 +1,6 @@
 from fastapi import Header
 
-from app.config import settings
+from app.core.config import settings
 from app.core.error_code import ErrorCode
 from app.core.exceptions import BusinessException
 
