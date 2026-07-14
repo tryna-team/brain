@@ -21,6 +21,9 @@ app = FastAPI(
     description="Tryna context intelligence engine",
     version="0.1.0",
     lifespan=lifespan,
+
+    # TODO_INFRA: 임시적 허용 범위 (추후 제거 예정)
+    root_path=settings.root_path,
 )
 
 register_exception_handlers(app)
