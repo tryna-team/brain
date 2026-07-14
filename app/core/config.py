@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     upstage_api_key: str | None = None
     upstage_embedding_model: str = "solar-embedding-1-large-query"
 
+    internal_api_key: str | None = None
+
     valkey_host: str | None = None
     valkey_port: int = 6379
     valkey_db: int = 0
