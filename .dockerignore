@@ -1,0 +1,38 @@
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.vscode
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# 로컬/운영 시크릿 (이미지에 포함 금지)
+.env
+.env.*
+!.env.example
+
+# 배포 불필요 파일
+rules/
+scripts/
+docs/
+agent.md
+README.md
+*.md
+
+# 테스트 (추후 추가 대비)
+tests/

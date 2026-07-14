@@ -20,8 +20,6 @@ class ErrorCode(Enum):
     LLM_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "LLM 연동을 사용할 수 없습니다.")
 
 
-    
-
     def __init__(self, status: HTTPStatus, message: str):
         self.status = status
         self.message = message
