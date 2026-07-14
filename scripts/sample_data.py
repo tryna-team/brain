@@ -1,8 +1,8 @@
 from neo4j import GraphDatabase # neo4j 접속을 위한 Python 공식 라이브러리
-from app.config import settings
+from app.core.config import settings
 
-URI = settings.NEO4J_URI
-AUTH = (settings.NEO4J_USERNAME, settings.NEO4J_PASSWORD)
+URI = settings.neo4j_uri
+AUTH = (settings.neo4j_username, settings.neo4j_password)
 
 driver = GraphDatabase.driver(URI, auth=AUTH)
 
