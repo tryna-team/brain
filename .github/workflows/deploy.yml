@@ -118,6 +118,7 @@ jobs:
             NEO4J_PASSWORD=${{ secrets.NEO4J_PASSWORD }}
             NEO4J_DATABASE=${{ secrets.NEO4J_DATABASE }}
             UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}
+            UPSTAGE_EMBEDDING_MODEL=${{ secrets.UPSTAGE_EMBEDDING_MODEL }}
             INTERNAL_API_KEY=${{ secrets.INTERNAL_API_KEY }}
 
       # 새 이미지로 Task Definition 갱신 (Nginx 사이드카 컨테이너)
