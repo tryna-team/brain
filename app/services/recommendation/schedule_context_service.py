@@ -26,17 +26,25 @@ class ScheduleContextService:
         title = request.title.strip()
         parts.append(title)
 
-        source_text = request.source_text.strip() if request.source_text else ""
-        if source_text and source_text != title:
-            parts.append(source_text[: self.SOURCE_TEXT_LIMIT])
+        source_text = (
+            request.source_text.strip()[: self.SOURCE_TEXT_LIMIT]
+            if request.source_text
+            else ""
+        )
+        if source_text and source_text != title and source_text not in parts:
+            parts.append(source_text)
 
         location = request.location.strip() if request.location else ""
         if location and location not in parts:
             parts.append(location)
 
-        description = request.description.strip() if request.description else ""
+        description = (
+            request.description.strip()[: self.DESCRIPTION_LIMIT]
+            if request.description
+            else ""
+        )
         if description and description not in parts:
-            parts.append(description[: self.DESCRIPTION_LIMIT])
+            parts.append(description)
 
         return " ".join(parts)
     
