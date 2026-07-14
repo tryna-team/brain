@@ -52,10 +52,10 @@ jobs:
       - name: Apply ECR lifecycle policy (keep latest 3 images)
         run: |
           aws ecr put-lifecycle-policy \
-            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --repository-name "$ECR_REPOSITORY" \
             --lifecycle-policy-text file://.github/ecr/lifecycle-policy.json
           aws ecr put-lifecycle-policy \
-            --repository-name ${{ env.NGINX_ECR_REPOSITORY }} \
+            --repository-name "$NGINX_ECR_REPOSITORY" \
             --lifecycle-policy-text file://.github/ecr/lifecycle-policy.json
 
       # Docker 이미지 빌드 & 푸시 (FastAPI)
@@ -157,11 +157,14 @@ jobs:
       # 요약
       - name: Deployment summary
         if: always()
+        env:
+          FASTAPI_IMAGE: ${{ steps.build-image.outputs.image }}
+          NGINX_IMAGE: ${{ steps.build-nginx-image.outputs.image }}
         run: |
           echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image (FastAPI)**: ${{ steps.build-image.outputs.image }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image (Nginx)**: ${{ steps.build-nginx-image.outputs.image }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image (FastAPI)**: $FASTAPI_IMAGE" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Image (Nginx)**: $NGINX_IMAGE" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Cluster**: ${{ env.ECS_CLUSTER }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Service**: ${{ env.ECS_SERVICE }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Region**: ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
