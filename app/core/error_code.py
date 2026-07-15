@@ -6,6 +6,7 @@ class ErrorCode(Enum):
     # 공통 에러 코드
     COMMON_400 = (HTTPStatus.BAD_REQUEST, "잘못된 요청입니다.")
     INTERNAL_AUTH_401 = (HTTPStatus.UNAUTHORIZED, "서버 간 인증에 실패했습니다.")
+    INTERNAL_AUTH_500 = (HTTPStatus.INTERNAL_SERVER_ERROR, "내부 API 인증 설정이 누락되었습니다.")
     COMMON_404 = (HTTPStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다.")
     COMMON_422 = (HTTPStatus.UNPROCESSABLE_ENTITY, "요청값 검증에 실패했습니다.")
     COMMON_500 = (HTTPStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.")

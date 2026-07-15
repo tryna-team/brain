@@ -13,7 +13,8 @@ async def verify_internal_api_key(
     x_internal_api_key: str | None = Header(default=None, alias=INTERNAL_API_KEY_HEADER),
 ) -> None:
     if not settings.internal_api_key:
-        raise BusinessException(ErrorCode.INTERNAL_AUTH_401)
+        raise BusinessException(ErrorCode.INTERNAL_AUTH_500)
+
     if not x_internal_api_key or not secrets.compare_digest(
         x_internal_api_key,
         settings.internal_api_key,

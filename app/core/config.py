@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     app_name: str = "Tryna Brain"
     app_env: str = "local"
     api_v1_prefix: str = "/api/v1"
+    internal_api_key: str | None = None
 
     # TODO_INFRA: 임시적 허용 범위 (추후 제거 예정)
     # ALB -> Nginx가 "/ai" 접두사를 떼어내고 FastAPI로 넘기므로, Swagger/OpenAPI가
@@ -25,6 +26,7 @@ class Settings(BaseSettings):
     valkey_port: int = 6379
     valkey_db: int = 0
     valkey_key_prefix: str = "tryna:brain"
+    valkey_candidate_vector_ttl_seconds: int = 60 * 60 * 24 * 30
 
     model_config = SettingsConfigDict(
         env_file=".env",
