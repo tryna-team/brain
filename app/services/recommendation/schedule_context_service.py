@@ -132,7 +132,7 @@ class ScheduleContextService:
     def _find_context_candidates(
         self,
         input_vector: list[float],
-        threshold: float = 0.52,
+        threshold: float = 0.47,
     ) -> list[str]:
         results: list[str] = []
 
@@ -147,11 +147,11 @@ class ScheduleContextService:
     
     # confidence 계산
     def _calculate_confidence(self, score: float) -> str:
-        if score >= 0.65:
+        if score >= 0.60:
             return "high"
-        if score >= 0.58:
+        if score >= 0.53:
             return "medium"
-        if score >= 0.55:
+        if score >= 0.48:
             return "low"
 
         return "unknown"
@@ -176,7 +176,7 @@ class ScheduleContextService:
             group="event_type",
             input_vector=input_vector,
             candidates=EVENT_TYPE_CANDIDATES,
-            threshold=0.55,
+            threshold=0.48,
         )
 
         place_type_key = None
@@ -187,7 +187,7 @@ class ScheduleContextService:
                 group="place_type",
                 input_vector=place_vector,
                 candidates=PLACE_TYPE_CANDIDATES,
-                threshold=0.45,
+                threshold=0.40,
             )
 
         context_keys = self._find_context_candidates(input_vector)
