@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.api.v1.routes import health, schedule_context
+from app.api.v1.routes import event_previews, health
 from app.core.internal_auth import verify_internal_api_key
 
 api_router = APIRouter()
@@ -10,5 +11,6 @@ api_router.include_router(health.router, tags=["Health"])
 protected_router = APIRouter(dependencies=[Depends(verify_internal_api_key)])
 protected_router.include_router(schedule_context.router)
 
+protected_router.include_router(event_previews.router, tags=["Event Preview"])
 api_router.include_router(protected_router)
 

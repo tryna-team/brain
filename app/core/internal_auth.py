@@ -1,4 +1,5 @@
 import secrets
+
 from fastapi import Header
 
 from app.core.config import settings
@@ -14,8 +15,8 @@ async def verify_internal_api_key(
     if not settings.internal_api_key:
         raise BusinessException(ErrorCode.INTERNAL_AUTH_500)
 
-    if not secrets.compare_digest(
-        x_internal_api_key or "",
+    if not x_internal_api_key or not secrets.compare_digest(
+        x_internal_api_key,
         settings.internal_api_key,
     ):
         raise BusinessException(ErrorCode.INTERNAL_AUTH_401)
