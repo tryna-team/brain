@@ -13,7 +13,7 @@ FROM python:3.13-slim
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends tzdata \
+    && apt-get install -y --no-install-recommends tzdata ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd -r fastapi && useradd -r -g fastapi fastapi
 

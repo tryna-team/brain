@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     valkey_host: str | None = None
     valkey_port: int = 6379
+    valkey_password: str | None = None
     valkey_db: int = 0
     valkey_key_prefix: str = "tryna:brain"
     valkey_candidate_vector_ttl_seconds: int = 60 * 60 * 24 * 30
