@@ -17,14 +17,14 @@ DATE_PATTERNS = [
     re.compile(r"(?P<year>\d{4})년\s*(?P<month>\d{1,2})월\s*(?P<day>\d{1,2})일(?:에)?"),
     re.compile(r"(?P<month>\d{1,2})월\s*(?P<day>\d{1,2})일(?:에)?"),
     re.compile(r"(?P<year>\d{4})[-/.](?P<month>\d{1,2})[-/.](?P<day>\d{1,2})"),
-    re.compile(r"(?P<month>\d{1,2})/(?P<day>\d{1,2})"),
+    re.compile(r"(?<![\d/.-])(?P<month>\d{1,2})/(?P<day>\d{1,2})(?![\d/.-])"),
 ]
 
 TIME_PATTERN = re.compile(
     r"(?:(?P<period>오전|오후|저녁|아침|밤|새벽|점심|낮)(?:에)?\s*)?"
     r"(?P<hour>\d{1,2})시"
     r"(?:\s*(?P<half>반)|\s*(?P<minute>\d{1,2})분)?"
-    r"(?:쯤|경)?"
+    r"(?:\s*(?:쯤|경))?"
 )
 
 AMBIGUOUS_TIME_WORDS = {
@@ -44,7 +44,15 @@ AMBIGUOUS_TIME_WORDS = {
     "새벽": "dawn",
 }
 
-PLACE_PATTERN = re.compile(r"(?P<place>[가-힣A-Za-z0-9]+(?:\s+[가-힣A-Za-z0-9]+){0,3})(?:에서|에)")
+PLACE_PATTERN = re.compile(
+    r"(?:^|\s)(?P<place>"
+    r"[가-힣A-Za-z0-9]+역\s+\d+번\s+출구"
+    r"|(?:서울|부산|수원|대구|대전|광주|인천|제주|강남|홍대|신촌|건대|잠실|판교)\s+(?:[가-힣A-Za-z0-9]+(?:역|시청|학교|회의실|카페|병원|공항|터미널|도서관|식당|회사|집|센터|광장|공원|대학교|대학)|시청|학교|회의실|카페|병원|공항|터미널|도서관|식당|회사|집|센터|광장|공원|대학교|대학)"
+    r"|(?:[가-힣A-Za-z0-9]+(?:역|시청|학교|회의실|카페|병원|공항|터미널|도서관|식당|회사|집|센터|광장|공원|대학교|대학)|시청|학교|회의실|카페|병원|공항|터미널|도서관|식당|회사|집|센터|광장|공원|대학교|대학)"
+    r"|[가-힣A-Za-z0-9]+(?:시|군|구|동|읍|면|리)"
+    r"|부산|서울|수원|대구|대전|광주|인천|제주"
+    r")(?:에서|에)"
+)
 
 
 @dataclass(frozen=True)
@@ -212,7 +220,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
         return ExtractedValue(
             value=selected.value,
             text=selected.text,
-            removable_texts=tuple(dict.fromkeys(removable_texts)),
+            removable_texts=_dedupe_longest_first(removable_texts),
             is_past=selected.is_past,
             is_ambiguous=selected.is_ambiguous,
         )
@@ -281,9 +289,8 @@ def _normalize_hour(hour: int, period: str | None) -> int | None:
 
 def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> str:
     result = source_text
-    for removable_text in removable_texts:
-        if removable_text:
-            result = result.replace(removable_text, " ")
+    for removable_text in _dedupe_longest_first(removable_texts):
+        result = result.replace(removable_text, " ")
 
     result = re.sub(r"\b에\b", " ", result)
     result = _normalize_spaces(result).strip(" ,.;")
@@ -302,3 +309,8 @@ def _this_weekday(base_date: date, weekday: int) -> date:
 
 def _normalize_spaces(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _dedupe_longest_first(texts: list[str | None]) -> tuple[str, ...]:
+    unique_texts = dict.fromkeys(text for text in texts if text)
+    return tuple(sorted(unique_texts, key=len, reverse=True))
