@@ -195,11 +195,13 @@ def _extract_date(source_text: str) -> ExtractedValue:
         weekday_index = source_text.find(weekday_text)
         if weekday_index != -1:
             parsed_date = _next_weekday(today, weekday)
-            removable_texts.append(weekday_text)
+            weekday_match = re.search(rf"{weekday_text}(?:에)?", source_text)
+            removable_text = weekday_match.group(0) if weekday_match else weekday_text
+            removable_texts.append(removable_text)
             candidates.append(
                 (
                     weekday_index,
-                    ExtractedValue(value=parsed_date.isoformat(), text=weekday_text),
+                    ExtractedValue(value=parsed_date.isoformat(), text=removable_text),
                 )
             )
 
