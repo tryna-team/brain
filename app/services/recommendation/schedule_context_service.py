@@ -3,6 +3,8 @@ import math
 from app.schemas.recommendation.recommendation import RecommendationRequest
 from app.core.config import settings
 from app.core.valkey_client import valkey_client
+from app.core.exceptions import BusinessException
+from app.core.error_code import ErrorCode
 from app.services.recommendation.embedding_service import EmbeddingService
 from app.schemas.recommendation.schedule_context import ScheduleContextResult
 from app.services.recommendation.schedule_context_candidates import (
@@ -13,44 +15,23 @@ from app.services.recommendation.schedule_context_candidates import (
 
 
 class ScheduleContextService:
-    SOURCE_TEXT_LIMIT = 300
-    DESCRIPTION_LIMIT = 300
 
     def __init__(self, embedding_service: EmbeddingService) -> None:
         self.embedding_service = embedding_service
     
-    # 임베딩 모델 호출 전 일정 제목, 일정 원문 정제
+    # 임베딩 모델 호출 전 정제
     def _build_embedding_text(self, request: RecommendationRequest) -> str:
-        parts: list[str] = []
+        cleaned_words = (word.strip() for word in request.embedding_words)
+        unique_words = list(dict.fromkeys(word for word in cleaned_words if word))
 
-        title = request.title.strip()
-        parts.append(title)
+        if not unique_words:
+            raise BusinessException(ErrorCode.EMBEDDING_400)
 
-        source_text = (
-            request.source_text.strip()[: self.SOURCE_TEXT_LIMIT]
-            if request.source_text
-            else ""
-        )
-        if source_text and source_text != title and source_text not in parts:
-            parts.append(source_text)
-
-        location = request.location.strip() if request.location else ""
-        if location and location not in parts:
-            parts.append(location)
-
-        description = (
-            request.description.strip()[: self.DESCRIPTION_LIMIT]
-            if request.description
-            else ""
-        )
-        if description and description not in parts:
-            parts.append(description)
-
-        return " ".join(parts)
+        return " ".join(unique_words)
     
     # 캐시 key 생성
     def _candidate_cache_key(self, group: str, key: str) -> str:
-        return f"{settings.valkey_key_prefix}:d101:candidate_vector:{group}:{key}"
+        return f"{settings.valkey_key_prefix}:d101:v1:candidate_vector:{group}:{key}"
     
     # 후보 벡터 Valkey에서 읽기
     def _get_cached_vector(self, group: str, key: str) -> list[float] | None:
@@ -79,6 +60,7 @@ class ScheduleContextService:
             valkey_client.set(
                 self._candidate_cache_key(group, key),
                 json.dumps(vector),
+                ex=settings.valkey_candidate_vector_ttl_seconds,
             )
         except Exception:
             return
@@ -124,14 +106,14 @@ class ScheduleContextService:
 
         if best_score < threshold:
             return None, best_score
-
+        
         return best_key, best_score
     
     # context 후보 목록 찾기
     def _find_context_candidates(
         self,
         input_vector: list[float],
-        threshold: float = 0.75,
+        threshold: float = 0.47,
     ) -> list[str]:
         results: list[str] = []
 
@@ -146,11 +128,11 @@ class ScheduleContextService:
     
     # confidence 계산
     def _calculate_confidence(self, score: float) -> str:
-        if score >= 0.85:
+        if score >= 0.60:
             return "high"
-        if score >= 0.75:
+        if score >= 0.53:
             return "medium"
-        if score >= 0.65:
+        if score >= 0.48:
             return "low"
 
         return "unknown"
@@ -175,7 +157,7 @@ class ScheduleContextService:
             group="event_type",
             input_vector=input_vector,
             candidates=EVENT_TYPE_CANDIDATES,
-            threshold=0.65,
+            threshold=0.48,
         )
 
         place_type_key = None
@@ -186,7 +168,7 @@ class ScheduleContextService:
                 group="place_type",
                 input_vector=place_vector,
                 candidates=PLACE_TYPE_CANDIDATES,
-                threshold=0.65,
+                threshold=0.40,
             )
 
         context_keys = self._find_context_candidates(input_vector)
@@ -194,7 +176,6 @@ class ScheduleContextService:
         return ScheduleContextResult(
             eventId=request.event_id,
             sourceType=request.source_type,
-            title=request.title,
             eventTypeCandidate=event_type_key or "unknown",
             contextCandidates=context_keys,
             placeTypeCandidate=place_type_key,

@@ -1,4 +1,3 @@
-from datetime import date, time
 from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.types import SourceType, ConfidenceLevel
 
@@ -8,7 +7,6 @@ class ScheduleContextResult(BaseModel):
     
     event_id: int = Field(alias= "eventId")
     source_type: SourceType = Field(alias= "sourceType")
-    title: str = Field(min_length= 1)
     event_type_candidate: str = Field(alias= "eventTypeCandidate")
     context_candidates: list[str] = Field(default_factory=list, alias= "contextCandidates")
     place_type_candidate: str | None = Field(default= None, alias= "placeTypeCandidate")
