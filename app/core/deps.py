@@ -8,6 +8,7 @@ from app.graph.neo4j_client import Neo4jClient, neo4j_client
 from app.graph.repositories.recommendation_repo import RecommendationRepo
 from app.services.recommendation.embedding_service import EmbeddingService
 from app.services.recommendation.schedule_context_service import ScheduleContextService
+from app.services.recommendation.recommendation_service import RecommendationService
 
 
 def get_neo4j_client() -> Neo4jClient:
@@ -37,10 +38,18 @@ def get_schedule_context_service(
     return ScheduleContextService(embedding_service=embedding_service)
 
 
-ScheduleContextServiceDep = Annotated[
-    ScheduleContextService,
-    Depends(get_schedule_context_service),
-]
+ScheduleContextServiceDep = Annotated[ScheduleContextService, Depends(get_schedule_context_service)]
+
+
+def get_recommendation_service(
+    schedule_context_service: ScheduleContextServiceDep,
+) -> RecommendationService:
+    return RecommendationService(
+        schedule_context_service=schedule_context_service,
+    )
+
+
+RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
 
 
 # 참고용 입니다!!!! 이런 코드가 있으면 좋을 것 같다는 의견!! 입니다!

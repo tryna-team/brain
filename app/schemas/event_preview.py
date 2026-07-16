@@ -12,11 +12,10 @@ class EventPreviewWarning(BaseModel):
 
 class EventPreviewResponse(BaseModel):
     sourceText: str
-    titleCandidate: str
     dateCandidate: str | None = None
     timeCandidate: str | None = None
     placeCandidate: str | None = None
-    eventTypeCandidate: str | None = None
+    toEmbedding: str
     isAllDayCandidate: bool
     needsConfirmation: bool
     warnings: list[EventPreviewWarning] = []
