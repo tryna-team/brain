@@ -295,7 +295,7 @@ def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> 
     result = re.sub(r"\b에\b", " ", result)
     result = _normalize_spaces(result).strip(" ,.;")
 
-    return result.split() if result else [source_text]
+    return result.split() if result else []
 
 
 def _next_weekday(base_date: date, weekday: int) -> date:

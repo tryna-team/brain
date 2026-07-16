@@ -33,3 +33,12 @@ def test_overlapping_relative_weekday_removals_use_longest_phrase_first():
 
     assert result.date_candidate is not None
     assert result.to_embedding == ["팀플", "회의"]
+
+
+def test_to_embedding_returns_empty_list_for_metadata_only_input():
+    result = parse_event_text("오늘 오후 3시 강남역에서")
+
+    assert result.date_candidate is not None
+    assert result.time_candidate == "15:00"
+    assert result.place_candidate == "강남역"
+    assert result.to_embedding == []
