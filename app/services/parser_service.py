@@ -19,7 +19,7 @@ DATE_PATTERNS = [
 ]
 
 TIME_PATTERN = re.compile(
-    r"(?:(?P<period>오전|오후|저녁|아침)(?:에)?\s*)?"
+    r"(?:(?P<period>오전|오후|저녁|아침|밤|새벽|점심|낮)(?:에)?\s*)?"
     r"(?P<hour>\d{1,2})시"
     r"(?:\s*(?P<half>반)|\s*(?P<minute>\d{1,2})분)?"
 )
@@ -31,8 +31,14 @@ AMBIGUOUS_TIME_WORDS = {
     "아침": "morning",
     "오후에": "afternoon",
     "오후": "afternoon",
+    "낮에": "afternoon",
+    "낮": "afternoon",
     "저녁에": "evening",
     "저녁": "evening",
+    "밤에": "evening",
+    "밤": "evening",
+    "새벽에": "dawn",
+    "새벽": "dawn",
 }
 
 PLACE_PATTERN = re.compile(r"(?P<place>[가-힣A-Za-z0-9]+)(?:에서|에)")
@@ -53,6 +59,7 @@ class ParsedEvent:
 class ExtractedValue:
     value: str | None
     text: str | None = None
+    removable_texts: tuple[str, ...] = ()
     is_past: bool = False
     is_ambiguous: bool = False
 
@@ -65,14 +72,14 @@ def parse_event_text(source_text: str) -> ParsedEvent:
     extracted_place = _extract_place(
         source_text=normalized_text,
         removable_texts=[
-            extracted_date.text,
+            *extracted_date.removable_texts,
             extracted_time.text,
         ],
     )
     to_embedding = _build_to_embedding(
         source_text=normalized_text,
         removable_texts=[
-            extracted_date.text,
+            *extracted_date.removable_texts,
             extracted_time.text,
             extracted_place.text,
         ],
@@ -92,6 +99,7 @@ def parse_event_text(source_text: str) -> ParsedEvent:
 def _extract_date(source_text: str) -> ExtractedValue:
     today = date.today()
     candidates: list[tuple[int, ExtractedValue]] = []
+    removable_texts: list[str] = []
 
     for pattern in DATE_PATTERNS:
         for match in pattern.finditer(source_text):
@@ -104,6 +112,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
             except ValueError:
                 continue
 
+            removable_texts.append(match.group(0))
             candidates.append(
                 (
                     match.start(),
@@ -118,10 +127,12 @@ def _extract_date(source_text: str) -> ExtractedValue:
     relative_dates = {
         "오늘": today,
         "내일": today + timedelta(days=1),
+        "모레": today + timedelta(days=2),
     }
     for text, parsed_date in relative_dates.items():
         index = source_text.find(text)
         if index != -1:
+            removable_texts.append(text)
             candidates.append(
                 (
                     index,
@@ -130,20 +141,38 @@ def _extract_date(source_text: str) -> ExtractedValue:
             )
 
     for weekday_text, weekday in WEEKDAY_INDEX.items():
-        next_week_text = f"다음 주 {weekday_text}"
-        next_week_index = source_text.find(next_week_text)
-        if next_week_index != -1:
-            parsed_date = _next_weekday(today + timedelta(days=7), weekday)
-            candidates.append(
-                (
-                    next_week_index,
-                    ExtractedValue(value=parsed_date.isoformat(), text=next_week_text),
+        for this_week_text in (f"이번 주 {weekday_text}", f"이번주 {weekday_text}"):
+            this_week_index = source_text.find(this_week_text)
+            if this_week_index != -1:
+                parsed_date = _this_weekday(today, weekday)
+                removable_texts.append(this_week_text)
+                candidates.append(
+                    (
+                        this_week_index,
+                        ExtractedValue(
+                            value=parsed_date.isoformat(),
+                            text=this_week_text,
+                            is_past=parsed_date < today,
+                        ),
+                    )
                 )
-            )
+
+        for next_week_text in (f"다음 주 {weekday_text}", f"다음주 {weekday_text}"):
+            next_week_index = source_text.find(next_week_text)
+            if next_week_index != -1:
+                parsed_date = _this_weekday(today + timedelta(days=7), weekday)
+                removable_texts.append(next_week_text)
+                candidates.append(
+                    (
+                        next_week_index,
+                        ExtractedValue(value=parsed_date.isoformat(), text=next_week_text),
+                    )
+                )
 
         weekday_index = source_text.find(weekday_text)
         if weekday_index != -1:
             parsed_date = _next_weekday(today, weekday)
+            removable_texts.append(weekday_text)
             candidates.append(
                 (
                     weekday_index,
@@ -152,7 +181,14 @@ def _extract_date(source_text: str) -> ExtractedValue:
             )
 
     if candidates:
-        return min(candidates, key=lambda candidate: candidate[0])[1]
+        selected = min(candidates, key=lambda candidate: candidate[0])[1]
+        return ExtractedValue(
+            value=selected.value,
+            text=selected.text,
+            removable_texts=tuple(dict.fromkeys(removable_texts)),
+            is_past=selected.is_past,
+            is_ambiguous=selected.is_ambiguous,
+        )
 
     return ExtractedValue(value=None)
 
@@ -197,10 +233,13 @@ def _normalize_hour(hour: int, period: str | None) -> int | None:
     if hour < 0 or hour > 24:
         return None
 
-    if period == "오전" or period == "아침":
+    if period in ("오전", "아침", "새벽"):
         return 0 if hour == 12 else hour
 
-    if period == "오후" or period == "저녁":
+    if period in ("오후", "저녁", "밤", "낮"):
+        return hour if hour == 12 else hour + 12 if hour < 12 else hour
+
+    if period == "점심":
         return hour if hour == 12 else hour + 12 if hour < 12 else hour
 
     if hour == 24:
@@ -228,6 +267,10 @@ def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> 
 def _next_weekday(base_date: date, weekday: int) -> date:
     days_until = (weekday - base_date.weekday()) % 7
     return base_date + timedelta(days=days_until)
+
+
+def _this_weekday(base_date: date, weekday: int) -> date:
+    return base_date - timedelta(days=base_date.weekday()) + timedelta(days=weekday)
 
 
 def _normalize_spaces(text: str) -> str:
