@@ -1,5 +1,3 @@
-import ssl
-
 from redis import Redis
 
 from app.core.config import settings
@@ -23,11 +21,6 @@ def _create_client() -> Redis | None:
     }
     if settings.valkey_password:
         client_kwargs["password"] = settings.valkey_password
-
-    # backend application-prod.yaml: spring.data.redis.ssl.enabled=true 와 동일하게 prod에서만 TLS 사용
-    if settings.app_env == "prod":
-        client_kwargs["ssl"] = True
-        client_kwargs["ssl_cert_reqs"] = ssl.CERT_REQUIRED
 
     return Redis(**client_kwargs)
 
