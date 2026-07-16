@@ -3,6 +3,8 @@ import math
 from app.schemas.recommendation.recommendation import RecommendationRequest
 from app.core.config import settings
 from app.core.valkey_client import valkey_client
+from app.core.exceptions import BusinessException
+from app.core.error_code import ErrorCode
 from app.services.recommendation.embedding_service import EmbeddingService
 from app.schemas.recommendation.schedule_context import ScheduleContextResult
 from app.services.recommendation.schedule_context_candidates import (
@@ -13,40 +15,24 @@ from app.services.recommendation.schedule_context_candidates import (
 
 
 class ScheduleContextService:
-    SOURCE_TEXT_LIMIT = 300
-    DESCRIPTION_LIMIT = 300
 
     def __init__(self, embedding_service: EmbeddingService) -> None:
         self.embedding_service = embedding_service
     
-    # 임베딩 모델 호출 전 일정 제목, 일정 원문 정제
+    # 임베딩 모델 호출 전 정제
     def _build_embedding_text(self, request: RecommendationRequest) -> str:
-        parts: list[str] = []
+        unique_words: list[str] = []
 
-        title = request.title.strip()
-        parts.append(title)
+        for word in request.embedding_words:
+            cleaned_word = word.strip()
 
-        source_text = (
-            request.source_text.strip()[: self.SOURCE_TEXT_LIMIT]
-            if request.source_text
-            else ""
-        )
-        if source_text and source_text != title and source_text not in parts:
-            parts.append(source_text)
+            if cleaned_word and cleaned_word not in unique_words:
+                unique_words.append(cleaned_word)
 
-        location = request.location.strip() if request.location else ""
-        if location and location not in parts:
-            parts.append(location)
+        if not unique_words:
+            raise BusinessException(ErrorCode.EMBEDDING_400)
 
-        description = (
-            request.description.strip()[: self.DESCRIPTION_LIMIT]
-            if request.description
-            else ""
-        )
-        if description and description not in parts:
-            parts.append(description)
-
-        return " ".join(parts)
+        return " ".join(unique_words)
     
     # 캐시 key 생성
     def _candidate_cache_key(self, group: str, key: str) -> str:
@@ -195,7 +181,6 @@ class ScheduleContextService:
         return ScheduleContextResult(
             eventId=request.event_id,
             sourceType=request.source_type,
-            title=request.title,
             eventTypeCandidate=event_type_key or "unknown",
             contextCandidates=context_keys,
             placeTypeCandidate=place_type_key,
