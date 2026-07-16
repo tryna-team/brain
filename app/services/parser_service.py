@@ -41,7 +41,7 @@ AMBIGUOUS_TIME_WORDS = {
     "새벽": "dawn",
 }
 
-PLACE_PATTERN = re.compile(r"(?P<place>[가-힣A-Za-z0-9]+)(?:에서|에)")
+PLACE_PATTERN = re.compile(r"(?P<place>[가-힣A-Za-z0-9]+(?:\s+[가-힣A-Za-z0-9]+){0,3})(?:에서|에)")
 
 
 @dataclass(frozen=True)
