@@ -22,6 +22,7 @@ TIME_PATTERN = re.compile(
     r"(?:(?P<period>오전|오후|저녁|아침|밤|새벽|점심|낮)(?:에)?\s*)?"
     r"(?P<hour>\d{1,2})시"
     r"(?:\s*(?P<half>반)|\s*(?P<minute>\d{1,2})분)?"
+    r"(?:쯤|경)?"
 )
 
 AMBIGUOUS_TIME_WORDS = {
@@ -141,6 +142,28 @@ def _extract_date(source_text: str) -> ExtractedValue:
             )
 
     for weekday_text, weekday in WEEKDAY_INDEX.items():
+        for relative_week_text, week_offset in (
+            (f"이번 {weekday_text}", 0),
+            (f"다음 {weekday_text}", 1),
+            (f"다다음 {weekday_text}", 2),
+            (f"다다음주 {weekday_text}", 2),
+            (f"다다음 주 {weekday_text}", 2),
+        ):
+            relative_week_index = source_text.find(relative_week_text)
+            if relative_week_index != -1:
+                parsed_date = _this_weekday(today + timedelta(days=7 * week_offset), weekday)
+                removable_texts.append(relative_week_text)
+                candidates.append(
+                    (
+                        relative_week_index,
+                        ExtractedValue(
+                            value=parsed_date.isoformat(),
+                            text=relative_week_text,
+                            is_past=parsed_date < today,
+                        ),
+                    )
+                )
+
         for this_week_text in (f"이번 주 {weekday_text}", f"이번주 {weekday_text}"):
             this_week_index = source_text.find(this_week_text)
             if this_week_index != -1:
