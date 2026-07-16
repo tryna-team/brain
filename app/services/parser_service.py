@@ -61,7 +61,7 @@ class ParsedEvent:
     date_candidate: str | None
     time_candidate: str | None
     place_candidate: str | None
-    to_embedding: str
+    to_embedding: list[str]
     is_past_date: bool
     is_time_ambiguous: bool
 
@@ -287,7 +287,7 @@ def _normalize_hour(hour: int, period: str | None) -> int | None:
     return hour
 
 
-def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> str:
+def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> list[str]:
     result = source_text
     for removable_text in _dedupe_longest_first(removable_texts):
         result = result.replace(removable_text, " ")
@@ -295,7 +295,7 @@ def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> 
     result = re.sub(r"\b에\b", " ", result)
     result = _normalize_spaces(result).strip(" ,.;")
 
-    return result or source_text
+    return result.split() if result else []
 
 
 def _next_weekday(base_date: date, weekday: int) -> date:
