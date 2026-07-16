@@ -19,9 +19,9 @@ DATE_PATTERNS = [
 ]
 
 TIME_PATTERN = re.compile(
-    r"(?:(?P<period>오전|오후|저녁|아침)\s*)?"
+    r"(?:(?P<period>오전|오후|저녁|아침)(?:에)?\s*)?"
     r"(?P<hour>\d{1,2})시"
-    r"(?:\s*(?P<minute>\d{1,2})분)?"
+    r"(?:\s*(?P<half>반)|\s*(?P<minute>\d{1,2})분)?"
 )
 
 AMBIGUOUS_TIME_WORDS = {
@@ -91,44 +91,68 @@ def parse_event_text(source_text: str) -> ParsedEvent:
 
 def _extract_date(source_text: str) -> ExtractedValue:
     today = date.today()
+    candidates: list[tuple[int, ExtractedValue]] = []
 
     for pattern in DATE_PATTERNS:
-        match = pattern.search(source_text)
-        if not match:
-            continue
+        for match in pattern.finditer(source_text):
+            year = int(match.groupdict().get("year") or today.year)
+            month = int(match.group("month"))
+            day = int(match.group("day"))
 
-        year = int(match.groupdict().get("year") or today.year)
-        month = int(match.group("month"))
-        day = int(match.group("day"))
+            try:
+                parsed_date = date(year, month, day)
+            except ValueError:
+                continue
 
-        try:
-            parsed_date = date(year, month, day)
-        except ValueError:
-            return ExtractedValue(value=None)
-
-        return ExtractedValue(
-            value=parsed_date.isoformat(),
-            text=match.group(0),
-            is_past=parsed_date < today,
-        )
+            candidates.append(
+                (
+                    match.start(),
+                    ExtractedValue(
+                        value=parsed_date.isoformat(),
+                        text=match.group(0),
+                        is_past=parsed_date < today,
+                    ),
+                )
+            )
 
     relative_dates = {
         "오늘": today,
         "내일": today + timedelta(days=1),
     }
     for text, parsed_date in relative_dates.items():
-        if text in source_text:
-            return ExtractedValue(value=parsed_date.isoformat(), text=text)
+        index = source_text.find(text)
+        if index != -1:
+            candidates.append(
+                (
+                    index,
+                    ExtractedValue(value=parsed_date.isoformat(), text=text),
+                )
+            )
 
     for weekday_text, weekday in WEEKDAY_INDEX.items():
         next_week_text = f"다음 주 {weekday_text}"
-        if next_week_text in source_text:
+        next_week_index = source_text.find(next_week_text)
+        if next_week_index != -1:
             parsed_date = _next_weekday(today + timedelta(days=7), weekday)
-            return ExtractedValue(value=parsed_date.isoformat(), text=next_week_text)
+            candidates.append(
+                (
+                    next_week_index,
+                    ExtractedValue(value=parsed_date.isoformat(), text=next_week_text),
+                )
+            )
 
-        if weekday_text in source_text:
+        weekday_index = source_text.find(weekday_text)
+        if weekday_index != -1:
             parsed_date = _next_weekday(today, weekday)
-            return ExtractedValue(value=parsed_date.isoformat(), text=weekday_text)
+            candidates.append(
+                (
+                    weekday_index,
+                    ExtractedValue(value=parsed_date.isoformat(), text=weekday_text),
+                )
+            )
+
+    if candidates:
+        return min(candidates, key=lambda candidate: candidate[0])[1]
 
     return ExtractedValue(value=None)
 
@@ -138,7 +162,7 @@ def _extract_time(source_text: str) -> ExtractedValue:
     if match:
         period = match.group("period")
         hour = int(match.group("hour"))
-        minute = int(match.group("minute") or 0)
+        minute = 30 if match.group("half") else int(match.group("minute") or 0)
         normalized_hour = _normalize_hour(hour, period)
 
         if normalized_hour is None or minute > 59:
