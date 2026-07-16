@@ -21,13 +21,8 @@ class ScheduleContextService:
     
     # 임베딩 모델 호출 전 정제
     def _build_embedding_text(self, request: RecommendationRequest) -> str:
-        unique_words: list[str] = []
-
-        for word in request.embedding_words:
-            cleaned_word = word.strip()
-
-            if cleaned_word and cleaned_word not in unique_words:
-                unique_words.append(cleaned_word)
+        cleaned_words = (word.strip() for word in request.embedding_words)
+        unique_words = list(dict.fromkeys(word for word in cleaned_words if word))
 
         if not unique_words:
             raise BusinessException(ErrorCode.EMBEDDING_400)
