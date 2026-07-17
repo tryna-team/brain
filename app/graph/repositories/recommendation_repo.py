@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from neo4j import Driver
 from neo4j.exceptions import ServiceUnavailable, SessionExpired
 
@@ -11,7 +13,9 @@ from app.graph.models.recommendation_candidate import RecommendationCandidateRec
 class RecommendationRepo:
     EVENT_TYPE_SCORE = 50
 
-    BASE_ITEM_TYPE_BY_TIMING_TYPE: dict[str | None, str] = {
+    BASE_ITEM_TYPE_BY_TIMING_TYPE: ClassVar[
+        dict[str | None, str]
+    ] = {
         None: "UNTIMED_PREP",
         "non_timed": "UNTIMED_PREP",
         "timed": "TIMED_ACTION",
