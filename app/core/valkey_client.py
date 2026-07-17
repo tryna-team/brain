@@ -1,4 +1,4 @@
-from ssl import CERT_NONE
+from ssl import CERT_REQUIRED
 
 from redis import Redis
 
@@ -8,6 +8,7 @@ from app.core.exceptions import BusinessException
 
 VALKEY_CONNECT_TIMEOUT_SECONDS = 2 if settings.app_env == "prod" else 3
 VALKEY_SSL_ENABLED = settings.app_env == "prod"
+VALKEY_SSL_CA_CERTS = "/etc/ssl/certs/ca-certificates.crt"
 
 
 def _create_client() -> Redis | None:
@@ -26,7 +27,8 @@ def _create_client() -> Redis | None:
         client_kwargs["password"] = settings.valkey_password
     if VALKEY_SSL_ENABLED:
         client_kwargs["ssl"] = True
-        client_kwargs["ssl_cert_reqs"] = CERT_NONE
+        client_kwargs["ssl_cert_reqs"] = CERT_REQUIRED
+        client_kwargs["ssl_ca_certs"] = VALKEY_SSL_CA_CERTS
 
     return Redis(**client_kwargs)
 
