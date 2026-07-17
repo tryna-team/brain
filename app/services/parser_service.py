@@ -14,12 +14,15 @@ WEEKDAY_INDEX = {
 }
 
 DATE_PATTERNS = [
+    # 한글 날짜 표현을 처리합니다: 2026년 8월 22일, 8월 22일.
     re.compile(r"(?P<year>\d{4})년\s*(?P<month>\d{1,2})월\s*(?P<day>\d{1,2})일(?:에)?"),
     re.compile(r"(?P<month>\d{1,2})월\s*(?P<day>\d{1,2})일(?:에)?"),
+    # 숫자 날짜 표현을 처리합니다: 2026-08-22, 2026/08/22, 2026.08.22, 08/22.
     re.compile(r"(?P<year>\d{4})[-/.](?P<month>\d{1,2})[-/.](?P<day>\d{1,2})"),
     re.compile(r"(?<![\d/.-])(?P<month>\d{1,2})/(?P<day>\d{1,2})(?![\d/.-])"),
 ]
 
+# 오전/오후, 반, 분, 쯤/경이 포함된 시간 표현을 처리합니다.
 TIME_PATTERN = re.compile(
     r"(?:(?P<period>오전|오후|저녁|아침|밤|새벽|점심|낮)(?:에)?\s*)?"
     r"(?P<hour>\d{1,2})시"
@@ -45,6 +48,7 @@ AMBIGUOUS_TIME_WORDS = {
 }
 
 PLACE_PATTERN = re.compile(
+    # 앞쪽 제목 단어가 장소 후보에 섞이지 않도록 경계를 둡니다.
     r"(?:^|\s)(?P<place>"
     r"[가-힣A-Za-z0-9]+역\s+\d+번\s+출구"
     r"|(?:서울|부산|수원|대구|대전|광주|인천|제주|강남|홍대|신촌|건대|잠실|판교)\s+(?:[가-힣A-Za-z0-9]+(?:역|시청|학교|회의실|카페|병원|공항|터미널|도서관|식당|회사|집|센터|광장|공원|대학교|대학)|시청|학교|회의실|카페|병원|공항|터미널|도서관|식당|회사|집|센터|광장|공원|대학교|대학)"
@@ -57,17 +61,21 @@ PLACE_PATTERN = re.compile(
 
 @dataclass(frozen=True)
 class ParsedEvent:
+    """룰베이스 파싱 결과를 서비스 계층에 전달하기 위한 일정 후보 DTO입니다."""
+
     source_text: str
     date_candidate: str | None
     time_candidate: str | None
     place_candidate: str | None
-    to_embedding: str
+    to_embedding: list[str]
     is_past_date: bool
     is_time_ambiguous: bool
 
 
 @dataclass(frozen=True)
 class ExtractedValue:
+    """추출된 후보값과 원문에서 제거해야 할 텍스트, 보정 플래그를 함께 담습니다."""
+
     value: str | None
     text: str | None = None
     removable_texts: tuple[str, ...] = ()
@@ -76,6 +84,7 @@ class ExtractedValue:
 
 
 def parse_event_text(source_text: str) -> ParsedEvent:
+    """사용자 원문을 날짜/시간/장소 후보와 임베딩 키워드로 변환합니다."""
     normalized_text = _normalize_spaces(source_text)
 
     extracted_date = _extract_date(normalized_text)
@@ -108,6 +117,7 @@ def parse_event_text(source_text: str) -> ParsedEvent:
 
 
 def _extract_date(source_text: str) -> ExtractedValue:
+    """절대 날짜, 상대 날짜, 요일 표현 중 원문에서 가장 먼저 나온 날짜 후보를 반환합니다."""
     today = date.today()
     candidates: list[tuple[int, ExtractedValue]] = []
     removable_texts: list[str] = []
@@ -229,6 +239,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
 
 
 def _extract_time(source_text: str) -> ExtractedValue:
+    """명확한 시간은 HH:mm으로, 모호한 시간대 표현은 morning/evening 같은 후보값으로 반환합니다."""
     match = TIME_PATTERN.search(source_text)
     if match:
         period = match.group("period")
@@ -252,6 +263,7 @@ def _extract_time(source_text: str) -> ExtractedValue:
 
 
 def _extract_place(source_text: str, removable_texts: list[str | None]) -> ExtractedValue:
+    """날짜/시간 표현을 먼저 제거한 뒤 장소 후보를 추출합니다."""
     searchable_text = source_text
     for removable_text in removable_texts:
         if removable_text:
@@ -265,6 +277,7 @@ def _extract_place(source_text: str, removable_texts: list[str | None]) -> Extra
 
 
 def _normalize_hour(hour: int, period: str | None) -> int | None:
+    """오전/오후/저녁 같은 시간대 표현을 반영해 24시간제 시각으로 보정합니다."""
     if hour < 0 or hour > 24:
         return None
 
@@ -280,14 +293,15 @@ def _normalize_hour(hour: int, period: str | None) -> int | None:
     if hour == 24:
         return 0
 
-    # MVP rule: a bare "3시" follows the policy example and is treated as 15:00.
+    # MVP 정책 예시에 맞춰 단독 "3시"는 15:00으로 처리합니다.
     if 1 <= hour <= 7:
         return hour + 12
 
     return hour
 
 
-def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> str:
+def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> list[str]:
+    """원문에서 날짜/시간/장소 표현을 제거하고 추천 임베딩에 사용할 토큰 배열을 만듭니다."""
     result = source_text
     for removable_text in _dedupe_longest_first(removable_texts):
         result = result.replace(removable_text, " ")
@@ -295,22 +309,26 @@ def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> 
     result = re.sub(r"\b에\b", " ", result)
     result = _normalize_spaces(result).strip(" ,.;")
 
-    return result or source_text
+    return result.split() if result else []
 
 
 def _next_weekday(base_date: date, weekday: int) -> date:
+    """기준일 이후 가장 가까운 해당 요일 날짜를 반환합니다."""
     days_until = (weekday - base_date.weekday()) % 7
     return base_date + timedelta(days=days_until)
 
 
 def _this_weekday(base_date: date, weekday: int) -> date:
+    """기준일이 포함된 주의 해당 요일 날짜를 반환합니다."""
     return base_date - timedelta(days=base_date.weekday()) + timedelta(days=weekday)
 
 
 def _normalize_spaces(text: str) -> str:
+    """연속 공백을 하나로 줄여 정규식 매칭과 토큰 생성을 안정화합니다."""
     return re.sub(r"\s+", " ", text).strip()
 
 
 def _dedupe_longest_first(texts: list[str | None]) -> tuple[str, ...]:
+    """제거 대상 문자열을 중복 제거하고 긴 표현부터 정렬해 부분 제거 오류를 방지합니다."""
     unique_texts = dict.fromkeys(text for text in texts if text)
     return tuple(sorted(unique_texts, key=len, reverse=True))
