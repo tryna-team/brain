@@ -15,7 +15,7 @@ class EventPreviewResponse(BaseModel):
     dateCandidate: str | None = None
     timeCandidate: str | None = None
     placeCandidate: str | None = None
-    toEmbedding: str
+    toEmbedding: list[str]
     isAllDayCandidate: bool
     needsConfirmation: bool
     warnings: list[EventPreviewWarning] = []
