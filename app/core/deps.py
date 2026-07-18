@@ -9,6 +9,7 @@ from app.graph.repositories.recommendation_repo import RecommendationRepo
 from app.services.recommendation.embedding_service import EmbeddingService
 from app.services.recommendation.schedule_context_service import ScheduleContextService
 from app.services.recommendation.recommendation_service import RecommendationService
+from app.services.recommendation.candidate_search_service import CandidateSearchService
 
 
 def get_neo4j_client() -> Neo4jClient:
@@ -43,13 +44,25 @@ ScheduleContextServiceDep = Annotated[ScheduleContextService, Depends(get_schedu
 
 def get_recommendation_service(
     schedule_context_service: ScheduleContextServiceDep,
+    candidate_search_service: CandidateSearchServiceDep,
 ) -> RecommendationService:
     return RecommendationService(
         schedule_context_service=schedule_context_service,
+        candidate_search_service=candidate_search_service
     )
 
 
 RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
+
+def get_candidate_search_service(
+    recommendation_repo: RecommendationRepoDep,
+) -> CandidateSearchService:
+    return CandidateSearchService(
+        recommendation_repo=recommendation_repo,
+    )
+
+
+CandidateSearchServiceDep = Annotated[CandidateSearchService, Depends(get_candidate_search_service)]
 
 
 # 참고용 입니다!!!! 이런 코드가 있으면 좋을 것 같다는 의견!! 입니다!
