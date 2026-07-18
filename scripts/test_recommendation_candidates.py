@@ -11,10 +11,10 @@ def main() -> None:
     )
 
     candidates = repository.find_candidates(
-        event_type="meeting",
-        contexts=[],
+        event_type="travel_departure",
+        contexts=["travel"],
         place_type=None,
-        limit=12,
+        limit=12
     )
 
     print(f"조회 후보 수: {len(candidates)}")

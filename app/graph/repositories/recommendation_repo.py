@@ -12,6 +12,8 @@ from app.graph.models.recommendation_candidate import RecommendationCandidateRec
 
 class RecommendationRepo:
     EVENT_TYPE_SCORE = 50
+    CONTEXT_SCORE = 20
+    PLACE_TYPE_SCORE = 15
 
     BASE_ITEM_TYPE_BY_TIMING_TYPE: ClassVar[
         dict[str | None, str]
@@ -28,41 +30,81 @@ class RecommendationRepo:
         self,
         event_type: str | None,
         contexts: list[str],
-        # conditions: list[str], -> 맥락 구조화 과정에서 제외되어서 없어도 될듯함
         place_type: str | None,
         limit: int = 12,
     ) -> list[RecommendationCandidateRecord]:
-        if event_type is None:
-            return []
+        if event_type is None and not contexts and place_type is None:
+            return [] # 조회 정보가 모두 없으면 빈리스트 반환 -> 추후 fallback 후보 조회로 개선 예정
 
         try:
             records, _, _ = self._driver.execute_query(
                 """
-                MATCH (eventType:EventType {code: $event_type})
-                    -[relationship:RECOMMENDS]->
-                    (template:RecommendationTemplate)
-                WHERE coalesce(eventType.isActive, true) = true
-                AND coalesce(template.isActive, true) = true
+                CALL {
+                    MATCH (eventType:EventType {code: $event_type})
+                        -[:RECOMMENDS]->
+                        (template:RecommendationTemplate)
+                    WHERE $event_type IS NOT NULL
+                    AND coalesce(eventType.isActive, true) = true
+                    RETURN
+                        template,
+                        $event_type_score AS relationScore,
+                        "EventType:" + eventType.code AS sourceRelation
+
+                    UNION ALL
+
+                    MATCH (context:Context)
+                        -[:RECOMMENDS]->
+                        (template:RecommendationTemplate)
+                    WHERE context.code IN $contexts
+                    AND coalesce(context.isActive, true) = true
+                    RETURN
+                        template,
+                        $context_score AS relationScore,
+                        "Context:" + context.code AS sourceRelation
+
+                    UNION ALL
+
+                    MATCH (placeType:PlaceType {code: $place_type})
+                        -[:RECOMMENDS]->
+                        (template:RecommendationTemplate)
+                    WHERE $place_type IS NOT NULL
+                    AND coalesce(placeType.isActive, true) = true
+                    RETURN
+                        template,
+                        $place_type_score AS relationScore,
+                        "PlaceType:" + placeType.code AS sourceRelation
+                }
+                WITH
+                    template,
+                    sourceRelation,
+                    max(relationScore) AS sourceScore
+                WITH
+                    template,
+                    sum(sourceScore) AS score,
+                    collect(sourceRelation) AS sourceRelations
+                WHERE coalesce(template.isActive, true) = true
                 RETURN
-                template.code AS templateId,
-                template.name AS title,
-                template.timingType AS timingType,
-                relationship.defaultRank AS defaultRank,
-                relationship.reason AS reason
-                ORDER BY relationship.defaultRank ASC
+                    template.code AS templateId,
+                    template.name AS title,
+                    template.timingType AS timingType,
+                    score,
+                    sourceRelations
+                ORDER BY score DESC, templateId ASC
                 LIMIT $limit
                 """,
                 event_type=event_type,
+                contexts=contexts,
+                place_type=place_type,
+                event_type_score=self.EVENT_TYPE_SCORE,
+                context_score=self.CONTEXT_SCORE,
+                place_type_score=self.PLACE_TYPE_SCORE,
                 limit=limit,
             )
         except (ServiceUnavailable, SessionExpired) as exc:
             raise BusinessException(ErrorCode.NEO4J_503) from exc
 
         return [
-            self._to_event_type_candidate(
-                record=record,
-                event_type=event_type,
-            )
+            self._to_candidate(record)
             for record in records
         ]
 
@@ -72,10 +114,9 @@ class RecommendationRepo:
     ) -> list[RecommendationCandidateRecord]:
         raise NotImplementedError
     
-    def _to_event_type_candidate(
+    def _to_candidate(
         self,
         record,
-        event_type: str,
     ) -> RecommendationCandidateRecord:
         timing_type = record["timingType"]
 
@@ -83,7 +124,8 @@ class RecommendationRepo:
             base_item_type = self.BASE_ITEM_TYPE_BY_TIMING_TYPE[timing_type]
         except KeyError as exc:
             raise ValueError(
-                f"지원하지 않는 RecommendationTemplate timingType입니다: {timing_type}"
+                "지원하지 않는 RecommendationTemplate "
+                f"timingType입니다: {timing_type}"
             ) from exc
 
         return RecommendationCandidateRecord(
@@ -91,7 +133,7 @@ class RecommendationRepo:
             title=record["title"],
             base_item_type=base_item_type,
             offset_days=None,
-            score=self.EVENT_TYPE_SCORE,
-            source_relations=[f"EventType:{event_type}"],
+            score=record["score"],
+            source_relations=list(record["sourceRelations"]),
         )
 
