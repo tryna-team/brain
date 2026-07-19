@@ -8,6 +8,10 @@ from app.schemas.event_preview import (
 from app.services.parser_service import ParsedEvent, parse_event_text
 
 
+TIME_PART_COUNT = 2
+TIME_WITH_SECONDS_PART_COUNT = 3
+
+
 def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
     source_text = request.sourceText.strip()
     if not source_text:
@@ -15,14 +19,17 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
 
     parsed_event = parse_event_text(source_text)
     warnings = _build_warnings(parsed_event)
+    start_time = _format_time_with_seconds(parsed_event.time_candidate)
 
     return EventPreviewResponse(
         sourceText=parsed_event.source_text,
-        dateCandidate=parsed_event.date_candidate,
-        timeCandidate=parsed_event.time_candidate,
+        startDate=parsed_event.date_candidate,
+        endDate=None,
+        startTime=start_time,
+        endTime=None,
         placeCandidate=parsed_event.place_candidate,
         toEmbedding=parsed_event.to_embedding,
-        isAllDayCandidate=parsed_event.time_candidate is None,
+        isAllDayCandidate=start_time is None,
         needsConfirmation=bool(warnings),
         warnings=warnings,
     )
@@ -56,3 +63,22 @@ def _build_warnings(parsed_event: ParsedEvent) -> list[EventPreviewWarning]:
         )
 
     return warnings
+
+
+def _format_time_with_seconds(time_candidate: str | None) -> str | None:
+    if time_candidate is None:
+        return None
+
+    time_parts = time_candidate.split(":")
+    if not all(part.isdigit() for part in time_parts):
+        return None
+
+    if len(time_parts) == TIME_PART_COUNT:
+        hour, minute = time_parts
+        return f"{hour.zfill(2)}:{minute.zfill(2)}:00"
+
+    if len(time_parts) == TIME_WITH_SECONDS_PART_COUNT:
+        hour, minute, second = time_parts
+        return f"{hour.zfill(2)}:{minute.zfill(2)}:{second.zfill(2)}"
+
+    return None
