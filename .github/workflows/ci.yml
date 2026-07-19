@@ -87,6 +87,7 @@ jobs:
           VALKEY_PORT: 6379
           APP_ENV: local
           UPSTAGE_API_KEY: ci-dummy-upstage-api-key
+          UPSTAGE_API_KEY_MULTI: ci-dummy-upstage-api-key-2
           INTERNAL_API_KEY: ci-dummy-internal-api-key
         run: |
           set -euo pipefail
@@ -103,6 +104,7 @@ jobs:
             -e VALKEY_PORT="$VALKEY_PORT" \
             -e APP_ENV="$APP_ENV" \
             -e UPSTAGE_API_KEY="$UPSTAGE_API_KEY" \
+            -e UPSTAGE_API_KEY_MULTI="$UPSTAGE_API_KEY_MULTI" \
             -e INTERNAL_API_KEY="$INTERNAL_API_KEY" \
             tryna-brain:ci)"
           echo "$CID" >>"$LOG"
