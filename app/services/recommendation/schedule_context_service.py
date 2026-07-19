@@ -3,8 +3,6 @@ import math
 from app.schemas.recommendation.recommendation import RecommendationRequest
 from app.core.config import settings
 from app.core.valkey_client import valkey_client
-from app.core.exceptions import BusinessException
-from app.core.error_code import ErrorCode
 from app.services.recommendation.embedding_service import EmbeddingService
 from app.schemas.recommendation.schedule_context import ScheduleContextResult
 from app.services.recommendation.schedule_context_candidates import (
@@ -20,12 +18,12 @@ class ScheduleContextService:
         self.embedding_service = embedding_service
     
     # 임베딩 모델 호출 전 정제
-    def _build_embedding_text(self, request: RecommendationRequest) -> str:
+    def _build_embedding_text(self, request: RecommendationRequest) -> str | None:
         cleaned_words = (word.strip() for word in request.embedding_words)
         unique_words = list(dict.fromkeys(word for word in cleaned_words if word))
 
         if not unique_words:
-            raise BusinessException(ErrorCode.EMBEDDING_400)
+            return None
 
         return " ".join(unique_words)
     
@@ -151,6 +149,17 @@ class ScheduleContextService:
     # 일정 맥락 구조화(D101 기능의 메인 함수)
     def structure_context(self, request: RecommendationRequest) -> ScheduleContextResult:
         embedding_text = self._build_embedding_text(request)
+
+        if embedding_text is None:
+            return ScheduleContextResult(
+                eventId=request.event_id,
+                sourceType=request.source_type,
+                eventTypeCandidate="unknown",
+                contextCandidates=[],
+                placeTypeCandidate=None,
+                confidenceLevel="unknown"
+            )
+
         input_vector = self.embedding_service.embed(embedding_text)
 
         event_type_key, event_type_score = self._find_best_candidate(

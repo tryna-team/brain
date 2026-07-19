@@ -25,8 +25,8 @@ EVENT_TYPE_CANDIDATES = [
         "examples": ["아버지 생신", "친구 생일", "생일 파티"],
     },
     {
-        "key": "travel",
-        "name": "여행",
+        "key": "travel_departure",
+        "name": "여행 출발",
         "description": "국내외 여행, 출장, 이동이 포함된 일정",
         "examples": ["제주도 일정", "부산 여행", "해외여행", "출장"],
     },
