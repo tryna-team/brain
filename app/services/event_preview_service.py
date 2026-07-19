@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.core.error_code import ErrorCode
 from app.core.exceptions import BusinessException
 from app.schemas.event_preview import (
@@ -19,11 +21,12 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
 
     parsed_event = parse_event_text(source_text)
     warnings = _build_warnings(parsed_event)
+    start_date = parsed_event.date_candidate or date.today().isoformat()
     start_time = _format_time_with_seconds(parsed_event.time_candidate)
 
     return EventPreviewResponse(
         sourceText=parsed_event.source_text,
-        startDate=parsed_event.date_candidate,
+        startDate=start_date,
         endDate=None,
         startTime=start_time,
         endTime=None,
@@ -38,13 +41,6 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
 def _build_warnings(parsed_event: ParsedEvent) -> list[EventPreviewWarning]:
     warnings = []
 
-    if parsed_event.date_candidate is None:
-        warnings.append(
-            EventPreviewWarning(
-                code="DATE_MISSING",
-                message="날짜 입력이 필요합니다.",
-            )
-        )
 
     if parsed_event.is_past_date:
         warnings.append(

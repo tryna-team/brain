@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.schemas.event_preview import EventPreviewRequest
 from app.services.event_preview_service import preview_event
 
@@ -23,3 +25,11 @@ def test_preview_event_keeps_ambiguous_time_out_of_start_time():
     assert result.isAllDayCandidate is True
     assert result.needsConfirmation is True
     assert any(warning.code == "TIME_AMBIGUOUS" for warning in result.warnings)
+
+
+def test_preview_event_defaults_missing_date_to_today():
+    result = preview_event(EventPreviewRequest(sourceText="팀플 회의"))
+
+    assert result.startDate == date.today().isoformat()
+    assert result.needsConfirmation is False
+    assert all(warning.code != "DATE_MISSING" for warning in result.warnings)
