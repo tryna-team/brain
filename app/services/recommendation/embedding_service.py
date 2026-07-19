@@ -5,42 +5,49 @@ import requests
 from app.core.config import settings
 from app.core.exceptions import BusinessException
 from app.core.error_code import ErrorCode
+from app.core.upstage_key_pool import upstage_key_pool
+from app.core.upstage_retry import upstage_retry
 
 
 class EmbeddingService:
     def __init__(self) -> None:
-        self.api_key = settings.upstage_api_key
         self.model = settings.upstage_embedding_model
         self.base_url = "https://api.upstage.ai/v1/embeddings"
+        self._key_pool = upstage_key_pool
 
     def embed(self, text: str) -> list[float]:
         if not text or not text.strip():
             raise BusinessException(ErrorCode.EMBEDDING_400)
 
-        if not self.api_key:
+        if not self._key_pool.is_configured:
             raise BusinessException(ErrorCode.EMBEDDING_503)
-        
+
         try:
-            response = requests.post(
-                self.base_url,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "input": text.strip(),
-                },
-                timeout=10,
-            )
-            response.raise_for_status()
+            body = self._request_embedding(text.strip())
         except requests.RequestException as exc:
             raise BusinessException(ErrorCode.EMBEDDING_503) from exc
 
         try:
-            body = response.json()
             embedding = body["data"][0]["embedding"]
         except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise BusinessException(ErrorCode.EMBEDDING_503) from exc
 
         return embedding
+
+    @upstage_retry(upstage_key_pool)
+    def _request_embedding(self, text: str, *, api_key: str) -> dict:
+        response = requests.post(
+            self.base_url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": self.model,
+                "input": text,
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+
+        return response.json()
