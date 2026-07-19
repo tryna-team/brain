@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     neo4j_database: str | None = None
 
     upstage_api_key: str | None = None
+    upstage_api_key_multi: str | None = None
     upstage_embedding_model: str = "solar-embedding-1-large-query"
 
     internal_api_key: str | None = None
