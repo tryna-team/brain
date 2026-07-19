@@ -4,7 +4,14 @@ from app.schemas.recommendation.recommendation import RecommendationRequest
 from app.core.config import settings
 from app.core.valkey_client import valkey_client
 from app.services.recommendation.embedding_service import EmbeddingService
-from app.schemas.recommendation.schedule_context import ScheduleContextResult
+from app.core.exceptions import BusinessException
+from app.schemas.recommendation.schedule_context import (
+    DateCandidate,
+    EmbeddingMeta,
+    ScheduleContext,
+    ScheduleContextResult,
+    TimeCandidate,
+)
 from app.services.recommendation.schedule_context_candidates import (
     CONTEXT_CANDIDATES,
     EVENT_TYPE_CANDIDATES,
@@ -17,15 +24,66 @@ class ScheduleContextService:
     def __init__(self, embedding_service: EmbeddingService) -> None:
         self.embedding_service = embedding_service
     
+    # # 임베딩 모델 호출 전 정제
+    # def _build_embedding_text(self, request: RecommendationRequest) -> str | None:
+    #     cleaned_words = (word.strip() for word in request.embedding_words)
+    #     unique_words = list(dict.fromkeys(word for word in cleaned_words if word))
+
+    #     if not unique_words:
+    #         return None
+
+    #     return " ".join(unique_words)
+    
     # 임베딩 모델 호출 전 정제
-    def _build_embedding_text(self, request: RecommendationRequest) -> str | None:
-        cleaned_words = (word.strip() for word in request.embedding_words)
-        unique_words = list(dict.fromkeys(word for word in cleaned_words if word))
+    def _build_semantic_input(
+        self,
+        request: RecommendationRequest,
+    ) -> str:
+        semantic_words: list[str] = []
 
-        if not unique_words:
-            return None
+        for word in request.embedding_words:
+            normalized_word = word.strip()
 
-        return " ".join(unique_words)
+            if not normalized_word:
+                continue
+
+            if normalized_word not in semantic_words:
+                semantic_words.append(normalized_word)
+
+        if semantic_words:
+            parts = [" ".join(semantic_words)]
+        else:
+            parts = [request.event_title.strip()]
+
+        if request.place_candidate:
+            place = request.place_candidate.strip()
+
+            if place:
+                parts.append(f"장소: {place}")
+
+        if request.description:
+            description = request.description.strip()[:100]
+
+            if description:
+                parts.append(description)
+
+        return ". ".join(parts)
+    
+    def _build_schedule_context(
+        self,
+        request: RecommendationRequest,
+    ) -> ScheduleContext:
+        return ScheduleContext(
+            dateCandidate=DateCandidate(
+                value=request.start_date_candidate
+            ),
+            timeCandidate=(
+                TimeCandidate(value=request.start_time_candidate)
+                if request.start_time_candidate is not None
+                else None
+            ),
+            placeCandidate=request.place_candidate,
+        )
     
     # 캐시 key 생성
     def _candidate_cache_key(self, group: str, key: str) -> str:
@@ -147,46 +205,36 @@ class ScheduleContextService:
         return dot / (norm_a * norm_b)
     
     # 일정 맥락 구조화(D101 기능의 메인 함수)
-    def structure_context(self, request: RecommendationRequest) -> ScheduleContextResult:
-        embedding_text = self._build_embedding_text(request)
+    def structure_context(
+        self,
+        request: RecommendationRequest,
+    ) -> ScheduleContextResult:
+        semantic_input = self._build_semantic_input(request)
+        schedule_context = self._build_schedule_context(request)
 
-        if embedding_text is None:
+        try:
+            query_embedding = self.embedding_service.embed(semantic_input)
+        except BusinessException:
             return ScheduleContextResult(
-                eventId=request.event_id,
-                sourceType=request.source_type,
-                eventTypeCandidate="unknown",
-                contextCandidates=[],
-                placeTypeCandidate=None,
-                confidenceLevel="unknown"
+                tempEventId=request.temp_event_id,
+                draftRevision=request.draft_revision,
+                queryEmbedding=None,
+                embeddingStatus="error",
+                semanticInputVersion="v1",
+                scheduleContext=schedule_context,
+                embeddingMeta=None,
             )
-
-        input_vector = self.embedding_service.embed(embedding_text)
-
-        event_type_key, event_type_score = self._find_best_candidate(
-            group="event_type",
-            input_vector=input_vector,
-            candidates=EVENT_TYPE_CANDIDATES,
-            threshold=0.48,
-        )
-
-        place_type_key = None
-
-        if request.location:
-            place_vector = self.embedding_service.embed(request.location.strip())
-            place_type_key, _ = self._find_best_candidate(
-                group="place_type",
-                input_vector=place_vector,
-                candidates=PLACE_TYPE_CANDIDATES,
-                threshold=0.40,
-            )
-
-        context_keys = self._find_context_candidates(input_vector)
 
         return ScheduleContextResult(
-            eventId=request.event_id,
-            sourceType=request.source_type,
-            eventTypeCandidate=event_type_key or "unknown",
-            contextCandidates=context_keys,
-            placeTypeCandidate=place_type_key,
-            confidenceLevel=self._calculate_confidence(event_type_score),
+            tempEventId=request.temp_event_id,
+            draftRevision=request.draft_revision,
+            queryEmbedding=query_embedding,
+            embeddingStatus="ready",
+            semanticInputVersion="v1",
+            scheduleContext=schedule_context,
+            embeddingMeta=EmbeddingMeta(
+                model=self.embedding_service.model,
+                profile="query",
+                dimension=len(query_embedding),
+            ),
         )
