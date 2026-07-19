@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from app.core.error_code import ErrorCode
 from app.core.exceptions import BusinessException
@@ -10,6 +11,7 @@ from app.schemas.event_preview import (
 from app.services.parser_service import ParsedEvent, parse_event_text
 
 
+ASIA_SEOUL = ZoneInfo("Asia/Seoul")
 TIME_PART_COUNT = 2
 TIME_WITH_SECONDS_PART_COUNT = 3
 
@@ -21,7 +23,7 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
 
     parsed_event = parse_event_text(source_text)
     warnings = _build_warnings(parsed_event)
-    start_date = parsed_event.date_candidate or date.today().isoformat()
+    start_date = parsed_event.date_candidate or datetime.now(ASIA_SEOUL).date().isoformat()
     start_time = _format_time_with_seconds(parsed_event.time_candidate)
 
     return EventPreviewResponse(
