@@ -74,10 +74,8 @@ class ScheduleContextService:
         request: RecommendationRequest,
     ) -> ScheduleContext:
         return ScheduleContext(
-            dateCandidate=(
-                DateCandidate(value=request.start_date_candidate)
-                if request.start_date_candidate is not None
-                else None
+            dateCandidate=DateCandidate(
+                value=request.start_date_candidate
             ),
             timeCandidate=(
                 TimeCandidate(value=request.start_time_candidate)
