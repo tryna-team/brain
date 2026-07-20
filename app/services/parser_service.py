@@ -85,6 +85,16 @@ class ExtractedValue:
     is_ambiguous: bool = False
 
 
+@dataclass(frozen=True)
+class ExtractedTime:
+    """시작/종료 시간 후보와 원문에서 제거할 시간 표현을 함께 담습니다."""
+
+    start_value: str | None = None
+    end_value: str | None = None
+    text: str | None = None
+    is_ambiguous: bool = False
+
+
 def parse_event_text(source_text: str) -> ParsedEvent:
     """사용자 원문을 날짜/시간/장소 후보와 임베딩 키워드로 변환합니다."""
     normalized_text = _normalize_spaces(source_text)
@@ -111,8 +121,8 @@ def parse_event_text(source_text: str) -> ParsedEvent:
         source_text=normalized_text,
         start_date=extracted_date.value,
         end_date=None,
-        start_time=extracted_time.value,
-        end_time=None,
+        start_time=extracted_time.start_value,
+        end_time=extracted_time.end_value,
         place_candidate=extracted_place.value,
         to_embedding=to_embedding,
         is_past_date=extracted_date.is_past,
@@ -242,28 +252,82 @@ def _extract_date(source_text: str) -> ExtractedValue:
     return ExtractedValue(value=None)
 
 
-def _extract_time(source_text: str) -> ExtractedValue:
-    """명확한 시간은 HH:mm으로, 모호한 시간대 표현은 morning/evening 같은 후보값으로 반환합니다."""
-    match = TIME_PATTERN.search(source_text)
-    if match:
-        period = match.group("period")
-        hour = int(match.group("hour"))
-        minute = 30 if match.group("half") else int(match.group("minute") or 0)
-        normalized_hour = _normalize_hour(hour, period)
+def _extract_time(source_text: str) -> ExtractedTime:
+    """명확한 시간은 HH:mm으로, 시간 범위는 시작/종료 후보로 나누어 반환합니다."""
+    matches = list(TIME_PATTERN.finditer(source_text))
+    if matches:
+        start_match = matches[0]
+        start_value = _format_time_match(start_match)
+        if start_value is not None:
+            end_match = _find_range_end_match(source_text, start_match, matches[1:])
+            if end_match:
+                end_value = _format_time_match(end_match, fallback_period=start_match.group("period"))
+                if end_value is None:
+                    return ExtractedTime(start_value=start_value, text=start_match.group(0))
 
-        if normalized_hour is None or minute > 59:
-            return ExtractedValue(value=None)
+                return ExtractedTime(
+                    start_value=start_value,
+                    end_value=end_value,
+                    text=_build_time_range_text(source_text, start_match, end_match),
+                )
 
-        return ExtractedValue(
-            value=f"{normalized_hour:02d}:{minute:02d}",
-            text=match.group(0),
-        )
+            return ExtractedTime(start_value=start_value, text=start_match.group(0))
 
     for text, value in AMBIGUOUS_TIME_WORDS.items():
         if text in source_text:
-            return ExtractedValue(value=value, text=text, is_ambiguous=True)
+            return ExtractedTime(start_value=value, text=text, is_ambiguous=True)
 
-    return ExtractedValue(value=None)
+    return ExtractedTime()
+
+
+def _format_time_match(match: re.Match[str], fallback_period: str | None = None) -> str | None:
+    """시간 정규식 매치를 24시간제 HH:mm 문자열로 변환합니다."""
+    period = match.group("period") or fallback_period
+    hour = int(match.group("hour"))
+    minute = 30 if match.group("half") else int(match.group("minute") or 0)
+    normalized_hour = _normalize_hour(hour, period)
+
+    if normalized_hour is None or minute > 59:
+        return None
+
+    return f"{normalized_hour:02d}:{minute:02d}"
+
+
+def _find_range_end_match(
+    source_text: str,
+    start_match: re.Match[str],
+    candidates: list[re.Match[str]],
+) -> re.Match[str] | None:
+    """첫 시간 뒤에 범위 연결어가 있을 때 종료 시간 후보를 찾습니다."""
+    for candidate in candidates:
+        between = source_text[start_match.end():candidate.start()]
+        after = source_text[candidate.end():candidate.end() + 2]
+        if _is_time_range_connector(between, after):
+            return candidate
+
+    return None
+
+
+def _build_time_range_text(
+    source_text: str,
+    start_match: re.Match[str],
+    end_match: re.Match[str],
+) -> str:
+    """임베딩 토큰에서 제거할 전체 시간 범위 표현을 반환합니다."""
+    end_index = end_match.end()
+    if source_text[end_index:end_index + 2] == "까지":
+        end_index += 2
+
+    return source_text[start_match.start():end_index]
+
+
+def _is_time_range_connector(between: str, after: str) -> bool:
+    """두 시간 표현 사이의 텍스트가 범위 표현인지 판단합니다."""
+    normalized = re.sub(r"\s+", "", between)
+    if normalized in ("부터", "~", "-", "부터~", "부터-"):
+        return True
+
+    return after.startswith("까지") and between.strip() == ""
 
 
 def _extract_place(source_text: str, removable_texts: list[str | None]) -> ExtractedValue:
@@ -336,3 +400,4 @@ def _dedupe_longest_first(texts: list[str | None]) -> tuple[str, ...]:
     """제거 대상 문자열을 중복 제거하고 긴 표현부터 정렬해 부분 제거 오류를 방지합니다."""
     unique_texts = dict.fromkeys(text for text in texts if text)
     return tuple(sorted(unique_texts, key=len, reverse=True))
+
