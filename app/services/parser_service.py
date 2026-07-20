@@ -2,6 +2,11 @@ import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+try:
+    from kiwipiepy import Kiwi
+except ImportError:
+    Kiwi = None
+
 
 WEEKDAY_INDEX = {
     "월요일": 0,
@@ -57,6 +62,12 @@ PLACE_PATTERN = re.compile(
     r"|부산|서울|수원|대구|대전|광주|인천|제주"
     r")(?:에서|에)"
 )
+
+
+EMBEDDING_POS_PREFIXES = ("N",)
+EMBEDDING_POS_TAGS = {"SL", "SN"}
+EMBEDDING_STOP_WORDS = {"것", "수", "등"}
+KIWI = Kiwi() if Kiwi else None
 
 
 @dataclass(frozen=True)
@@ -387,7 +398,28 @@ def _build_to_embedding(source_text: str, removable_texts: list[str | None]) -> 
     result = re.sub(r"\b에\b", " ", result)
     result = _normalize_spaces(result).strip(" ,.;")
 
-    return result.split() if result else []
+    return _extract_embedding_tokens(result)
+
+
+def _extract_embedding_tokens(text: str) -> list[str]:
+    """Kiwi 형태소 분석으로 추천에 필요한 핵심 토큰만 추출합니다."""
+    if not text:
+        return []
+
+    if KIWI is None:
+        return text.split()
+
+    tokens: list[str] = []
+    for token in KIWI.tokenize(text):
+        form = token.form.strip()
+        tag = token.tag
+        if not form or form in EMBEDDING_STOP_WORDS:
+            continue
+
+        if tag.startswith(EMBEDDING_POS_PREFIXES) or tag in EMBEDDING_POS_TAGS:
+            tokens.append(form)
+
+    return tokens if tokens else text.split()
 
 
 def _next_weekday(base_date: date, weekday: int) -> date:
@@ -410,4 +442,3 @@ def _dedupe_longest_first(texts: list[str | None]) -> tuple[str, ...]:
     """제거 대상 문자열을 중복 제거하고 긴 표현부터 정렬해 부분 제거 오류를 방지합니다."""
     unique_texts = dict.fromkeys(text for text in texts if text)
     return tuple(sorted(unique_texts, key=len, reverse=True))
-
