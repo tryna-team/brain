@@ -17,7 +17,7 @@ TIME_WITH_SECONDS_PART_COUNT = 3
 
 
 def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
-    source_text = request.sourceText.strip()
+    source_text = request.source_text.strip()
     if not source_text:
         raise BusinessException(ErrorCode.COMMON_400)
 
@@ -27,22 +27,21 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
     start_time = _format_time_with_seconds(parsed_event.start_time)
 
     return EventPreviewResponse(
-        sourceText=parsed_event.source_text,
-        startDate=start_date,
-        endDate=parsed_event.end_date,
-        startTime=start_time,
-        endTime=_format_time_with_seconds(parsed_event.end_time),
-        placeCandidate=parsed_event.place_candidate,
-        toEmbedding=parsed_event.to_embedding,
-        isAllDayCandidate=start_time is None,
-        needsConfirmation=bool(warnings),
+        source_text=parsed_event.source_text,
+        start_date=start_date,
+        end_date=parsed_event.end_date,
+        start_time=start_time,
+        end_time=_format_time_with_seconds(parsed_event.end_time),
+        place_candidate=parsed_event.place_candidate,
+        to_embedding=parsed_event.to_embedding,
+        is_all_day_candidate=start_time is None,
+        needs_confirmation=bool(warnings),
         warnings=warnings,
     )
 
 
 def _build_warnings(parsed_event: ParsedEvent) -> list[EventPreviewWarning]:
     warnings = []
-
 
     if parsed_event.is_past_date:
         warnings.append(
