@@ -42,3 +42,27 @@ def test_to_embedding_returns_empty_list_for_metadata_only_input():
     assert result.start_time == "15:00"
     assert result.place_candidate == "강남역"
     assert result.to_embedding == []
+
+
+def test_time_range_from_to_sets_start_and_end_time():
+    result = parse_event_text("금요일 3시부터 4시까지 팀플 회의")
+
+    assert result.start_time == "15:00"
+    assert result.end_time == "16:00"
+    assert result.to_embedding == ["팀플", "회의"]
+
+
+def test_time_range_with_tilde_sets_start_and_end_time():
+    result = parse_event_text("금요일 오후 3시 ~ 4시 팀플 회의")
+
+    assert result.start_time == "15:00"
+    assert result.end_time == "16:00"
+    assert result.to_embedding == ["팀플", "회의"]
+
+
+def test_time_range_with_hyphen_sets_start_and_end_time():
+    result = parse_event_text("금요일 오전 3시-4시 팀플 회의")
+
+    assert result.start_time == "03:00"
+    assert result.end_time == "04:00"
+    assert result.to_embedding == ["팀플", "회의"]
