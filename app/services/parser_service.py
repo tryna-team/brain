@@ -198,7 +198,12 @@ def _extract_date(source_text: str) -> ExtractedValue:
                     )
                 )
 
-        for this_week_text in (f"이번 주 {weekday_text}", f"이번주 {weekday_text}"):
+        for this_week_text in (
+            f"이번 주 {weekday_text}",
+            f"이번주 {weekday_text}",
+            f"요번 주 {weekday_text}",
+            f"요번주 {weekday_text}",
+        ):
             this_week_index = source_text.find(this_week_text)
             if this_week_index != -1:
                 parsed_date = _this_weekday(today, weekday)
@@ -214,7 +219,12 @@ def _extract_date(source_text: str) -> ExtractedValue:
                     )
                 )
 
-        for next_week_text in (f"다음 주 {weekday_text}", f"다음주 {weekday_text}"):
+        for next_week_text in (
+            f"다음 주 {weekday_text}",
+            f"다음주 {weekday_text}",
+            f"담 주 {weekday_text}",
+            f"담주 {weekday_text}",
+        ):
             next_week_index = source_text.find(next_week_text)
             if next_week_index != -1:
                 parsed_date = _this_weekday(today + timedelta(days=7), weekday)
