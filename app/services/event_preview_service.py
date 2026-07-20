@@ -23,15 +23,15 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
 
     parsed_event = parse_event_text(source_text)
     warnings = _build_warnings(parsed_event)
-    start_date = parsed_event.date_candidate or datetime.now(ASIA_SEOUL).date().isoformat()
-    start_time = _format_time_with_seconds(parsed_event.time_candidate)
+    start_date = parsed_event.start_date or datetime.now(ASIA_SEOUL).date().isoformat()
+    start_time = _format_time_with_seconds(parsed_event.start_time)
 
     return EventPreviewResponse(
         sourceText=parsed_event.source_text,
         startDate=start_date,
-        endDate=None,
+        endDate=parsed_event.end_date,
         startTime=start_time,
-        endTime=None,
+        endTime=_format_time_with_seconds(parsed_event.end_time),
         placeCandidate=parsed_event.place_candidate,
         toEmbedding=parsed_event.to_embedding,
         isAllDayCandidate=start_time is None,

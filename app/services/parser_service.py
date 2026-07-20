@@ -64,8 +64,10 @@ class ParsedEvent:
     """룰베이스 파싱 결과를 서비스 계층에 전달하기 위한 일정 후보 DTO입니다."""
 
     source_text: str
-    date_candidate: str | None
-    time_candidate: str | None
+    start_date: str | None
+    end_date: str | None
+    start_time: str | None
+    end_time: str | None
     place_candidate: str | None
     to_embedding: list[str]
     is_past_date: bool
@@ -107,8 +109,10 @@ def parse_event_text(source_text: str) -> ParsedEvent:
 
     return ParsedEvent(
         source_text=normalized_text,
-        date_candidate=extracted_date.value,
-        time_candidate=extracted_time.value,
+        start_date=extracted_date.value,
+        end_date=None,
+        start_time=extracted_time.value,
+        end_time=None,
         place_candidate=extracted_place.value,
         to_embedding=to_embedding,
         is_past_date=extracted_date.is_past,
