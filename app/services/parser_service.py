@@ -258,22 +258,20 @@ def _extract_time(source_text: str) -> ExtractedTime:
     if matches:
         start_match = matches[0]
         start_value = _format_time_match(start_match)
-        if start_value is None:
-            return ExtractedTime()
+        if start_value is not None:
+            end_match = _find_range_end_match(source_text, start_match, matches[1:])
+            if end_match:
+                end_value = _format_time_match(end_match, fallback_period=start_match.group("period"))
+                if end_value is None:
+                    return ExtractedTime(start_value=start_value, text=start_match.group(0))
 
-        end_match = _find_range_end_match(source_text, start_match, matches[1:])
-        if end_match:
-            end_value = _format_time_match(end_match, fallback_period=start_match.group("period"))
-            if end_value is None:
-                return ExtractedTime(start_value=start_value, text=start_match.group(0))
+                return ExtractedTime(
+                    start_value=start_value,
+                    end_value=end_value,
+                    text=_build_time_range_text(source_text, start_match, end_match),
+                )
 
-            return ExtractedTime(
-                start_value=start_value,
-                end_value=end_value,
-                text=_build_time_range_text(source_text, start_match, end_match),
-            )
-
-        return ExtractedTime(start_value=start_value, text=start_match.group(0))
+            return ExtractedTime(start_value=start_value, text=start_match.group(0))
 
     for text, value in AMBIGUOUS_TIME_WORDS.items():
         if text in source_text:
@@ -326,7 +324,10 @@ def _build_time_range_text(
 def _is_time_range_connector(between: str, after: str) -> bool:
     """두 시간 표현 사이의 텍스트가 범위 표현인지 판단합니다."""
     normalized = re.sub(r"\s+", "", between)
-    return normalized in ("부터", "~", "-", "부터~", "부터-") or after.startswith("까지")
+    if normalized in ("부터", "~", "-", "부터~", "부터-"):
+        return True
+
+    return after.startswith("까지") and between.strip() == ""
 
 
 def _extract_place(source_text: str, removable_texts: list[str | None]) -> ExtractedValue:
@@ -399,3 +400,4 @@ def _dedupe_longest_first(texts: list[str | None]) -> tuple[str, ...]:
     """제거 대상 문자열을 중복 제거하고 긴 표현부터 정렬해 부분 제거 오류를 방지합니다."""
     unique_texts = dict.fromkeys(text for text in texts if text)
     return tuple(sorted(unique_texts, key=len, reverse=True))
+

@@ -66,3 +66,19 @@ def test_time_range_with_hyphen_sets_start_and_end_time():
     assert result.start_time == "03:00"
     assert result.end_time == "04:00"
     assert result.to_embedding == ["팀플", "회의"]
+
+
+def test_invalid_explicit_time_falls_back_to_ambiguous_period():
+    result = parse_event_text("오후 25시 팀플 회의")
+
+    assert result.start_time == "afternoon"
+    assert result.end_time is None
+    assert result.is_time_ambiguous is True
+
+
+def test_until_suffix_without_clean_connector_is_not_time_range():
+    result = parse_event_text("금요일 3시 회의 4시까지 팀플")
+
+    assert result.start_time == "15:00"
+    assert result.end_time is None
+    assert result.to_embedding == ["회의", "4시까지", "팀플"]
