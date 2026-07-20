@@ -82,3 +82,19 @@ def test_until_suffix_without_clean_connector_is_not_time_range():
     assert result.start_time == "15:00"
     assert result.end_time is None
     assert result.to_embedding == ["회의", "4시까지", "팀플"]
+
+
+def test_week_aliases_are_parsed_as_this_and_next_week():
+    this_week = parse_event_text("요번주 금요일 팀플 회의")
+    spaced_this_week = parse_event_text("요번 주 금요일 팀플 회의")
+    next_week = parse_event_text("담주 금요일 팀플 회의")
+    spaced_next_week = parse_event_text("담 주 금요일 팀플 회의")
+    canonical_this_week = parse_event_text("이번주 금요일 팀플 회의")
+    canonical_next_week = parse_event_text("다음주 금요일 팀플 회의")
+
+    assert this_week.start_date == canonical_this_week.start_date
+    assert spaced_this_week.start_date == canonical_this_week.start_date
+    assert next_week.start_date == canonical_next_week.start_date
+    assert spaced_next_week.start_date == canonical_next_week.start_date
+    assert this_week.to_embedding == ["팀플", "회의"]
+    assert next_week.to_embedding == ["팀플", "회의"]
