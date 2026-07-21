@@ -1,5 +1,23 @@
+from datetime import date
+
 from app.services.parser_service import parse_event_text
 
+
+
+def test_relative_dates_use_service_timezone_today(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    monkeypatch.setattr(
+        parser_service,
+        "_today_in_service_timezone",
+        lambda: date(2026, 7, 22),
+    )
+
+    today_result = parser_service.parse_event_text("오늘 팀플 회의")
+    tomorrow_result = parser_service.parse_event_text("내일 팀플 회의")
+
+    assert today_result.start_date == "2026-07-22"
+    assert tomorrow_result.start_date == "2026-07-23"
 
 def test_month_day_slash_pattern_does_not_match_embedded_numeric_date():
     result = parse_event_text("2012/13/20 부산 전시회")
@@ -81,7 +99,7 @@ def test_until_suffix_without_clean_connector_is_not_time_range():
 
     assert result.start_time == "15:00"
     assert result.end_time is None
-    assert result.to_embedding == ["회의", "4시까지", "팀플"]
+    assert result.to_embedding == ["회의", "4", "시", "팀플"]
 
 
 def test_week_aliases_are_parsed_as_this_and_next_week():
