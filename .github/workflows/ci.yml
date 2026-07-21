@@ -17,7 +17,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # 실제 배포 환경도 AuraDB(Neo4j) + Valkey(Redis)이므로, 컨테이너로 기동 검증까지 수행한다.
+    # 실제 배포 환경도 AuraDB(Neo4j)이므로, 컨테이너로 기동 검증까지 수행한다.
     services:
       neo4j:
         image: neo4j:5-community
@@ -29,16 +29,6 @@ jobs:
         options: >-
           --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1'"
           --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
           --health-timeout 5s
           --health-retries 10
 
@@ -76,19 +66,22 @@ jobs:
       - name: Validate Nginx configuration syntax
         run: docker run --rm tryna-brain-nginx:ci nginx -t
 
-      # Neo4j/Redis 컨테이너로 애플리케이션을 기동해 연결을 /api/v1/health로 검증한다.
-      - name: Boot application against Neo4j and Redis and verify /api/v1/health
+      # Neo4j 컨테이너로 애플리케이션을 기동해 연결을 /api/v1/health로 검증한다.
+      - name: Boot application against Neo4j and verify /api/v1/health
         env:
           NEO4J_URI: neo4j://localhost:7687
           NEO4J_USERNAME: neo4j
           NEO4J_PASSWORD: password
           NEO4J_DATABASE: neo4j
-          VALKEY_HOST: localhost
-          VALKEY_PORT: 6379
           APP_ENV: local
           UPSTAGE_API_KEY: ci-dummy-upstage-api-key
           UPSTAGE_API_KEY_MULTI: ci-dummy-upstage-api-key-2
           INTERNAL_API_KEY: ci-dummy-internal-api-key
+          D102_EMBEDDING_DIMENSION: 4096
+          D102_EVENT_TYPE_MIN_SCORE: 0.6
+          D102_CONTEXT_MIN_SCORE: 0.6
+          D102_PLACE_TYPE_MIN_SCORE: 0.6
+          D102_RECOMMENDATION_MIN_SCORE: 0.6
         run: |
           set -euo pipefail
           LOG=/tmp/tryna-brain-boot.log
@@ -100,12 +93,15 @@ jobs:
             -e NEO4J_USERNAME="$NEO4J_USERNAME" \
             -e NEO4J_PASSWORD="$NEO4J_PASSWORD" \
             -e NEO4J_DATABASE="$NEO4J_DATABASE" \
-            -e VALKEY_HOST="$VALKEY_HOST" \
-            -e VALKEY_PORT="$VALKEY_PORT" \
             -e APP_ENV="$APP_ENV" \
             -e UPSTAGE_API_KEY="$UPSTAGE_API_KEY" \
             -e UPSTAGE_API_KEY_MULTI="$UPSTAGE_API_KEY_MULTI" \
             -e INTERNAL_API_KEY="$INTERNAL_API_KEY" \
+            -e D102_EMBEDDING_DIMENSION="$D102_EMBEDDING_DIMENSION" \
+            -e D102_EVENT_TYPE_MIN_SCORE="$D102_EVENT_TYPE_MIN_SCORE" \
+            -e D102_CONTEXT_MIN_SCORE="$D102_CONTEXT_MIN_SCORE" \
+            -e D102_PLACE_TYPE_MIN_SCORE="$D102_PLACE_TYPE_MIN_SCORE" \
+            -e D102_RECOMMENDATION_MIN_SCORE="$D102_RECOMMENDATION_MIN_SCORE" \
             tryna-brain:ci)"
           echo "$CID" >>"$LOG"
 
@@ -119,7 +115,7 @@ jobs:
             fi
             code="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/health || true)"
             if [ "$code" = "200" ]; then
-              echo "헬스체크 성공 (Neo4j/Redis 연결 정상)"
+              echo "헬스체크 성공 (Neo4j 연결 정상)"
               exit 0
             fi
             sleep 2
