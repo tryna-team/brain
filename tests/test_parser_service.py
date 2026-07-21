@@ -98,3 +98,39 @@ def test_week_aliases_are_parsed_as_this_and_next_week():
     assert spaced_next_week.start_date == canonical_next_week.start_date
     assert this_week.to_embedding == ["팀플", "회의"]
     assert next_week.to_embedding == ["팀플", "회의"]
+
+
+class FakeKiwiToken:
+    def __init__(self, form: str, tag: str):
+        self.form = form
+        self.tag = tag
+
+
+class FakeKiwi:
+    def tokenize(self, text: str):
+        return [
+            FakeKiwiToken("팀플", "NNG"),
+            FakeKiwiToken("에서", "JKB"),
+            FakeKiwiToken("회의", "NNG"),
+            FakeKiwiToken("하다", "VV"),
+        ]
+
+
+def test_to_embedding_uses_kiwi_core_tokens_when_available(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    monkeypatch.setattr(parser_service, "KIWI", FakeKiwi())
+
+    result = parser_service.parse_event_text("금요일 3시 팀플에서 회의하다")
+
+    assert result.to_embedding == ["팀플", "회의"]
+
+
+def test_to_embedding_falls_back_to_space_tokens_without_kiwi(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    monkeypatch.setattr(parser_service, "KIWI", None)
+
+    result = parser_service.parse_event_text("금요일 3시 팀플 회의")
+
+    assert result.to_embedding == ["팀플", "회의"]
