@@ -24,7 +24,6 @@ class ComponentHealth(BaseModel):
 
 class HealthComponents(BaseModel):
     neo4j: ComponentHealth
-    redis: ComponentHealth
 
 
 class HealthResponse(BaseModel):
@@ -33,16 +32,11 @@ class HealthResponse(BaseModel):
     components: HealthComponents
 
     @classmethod
-    def of(cls, neo4j: ComponentHealth, redis: ComponentHealth) -> "HealthResponse":
-        overall = (
-            HealthStatus.UP
-            if neo4j.status == HealthStatus.UP and redis.status == HealthStatus.UP
-            else HealthStatus.DOWN
-        )
+    def of(cls, neo4j: ComponentHealth) -> "HealthResponse":
         return cls(
-            status=overall,
+            status=neo4j.status,
             timestamp=datetime.now(timezone.utc),
-            components=HealthComponents(neo4j=neo4j, redis=redis),
+            components=HealthComponents(neo4j=neo4j),
         )
 
     def is_up(self) -> bool:
