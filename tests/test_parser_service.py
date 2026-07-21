@@ -116,27 +116,21 @@ class FakeKiwi:
         ]
 
 
-def test_to_embedding_uses_kiwi_core_tokens_when_available():
+def test_to_embedding_uses_kiwi_core_tokens_when_available(monkeypatch):
     import app.services.parser_service as parser_service
 
-    original_kiwi = parser_service.KIWI
-    parser_service.KIWI = FakeKiwi()
-    try:
-        result = parser_service.parse_event_text("금요일 3시 팀플에서 회의하다")
-    finally:
-        parser_service.KIWI = original_kiwi
+    monkeypatch.setattr(parser_service, "KIWI", FakeKiwi())
+
+    result = parser_service.parse_event_text("금요일 3시 팀플에서 회의하다")
 
     assert result.to_embedding == ["팀플", "회의"]
 
 
-def test_to_embedding_falls_back_to_space_tokens_without_kiwi():
+def test_to_embedding_falls_back_to_space_tokens_without_kiwi(monkeypatch):
     import app.services.parser_service as parser_service
 
-    original_kiwi = parser_service.KIWI
-    parser_service.KIWI = None
-    try:
-        result = parser_service.parse_event_text("금요일 3시 팀플 회의")
-    finally:
-        parser_service.KIWI = original_kiwi
+    monkeypatch.setattr(parser_service, "KIWI", None)
+
+    result = parser_service.parse_event_text("금요일 3시 팀플 회의")
 
     assert result.to_embedding == ["팀플", "회의"]
