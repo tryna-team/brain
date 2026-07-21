@@ -15,6 +15,25 @@ class EmbeddingService:
         self.passage_model = settings.upstage_passage_embedding_model
         self.base_url = "https://api.upstage.ai/v1/embeddings"
         self._key_pool = upstage_key_pool
+
+    def _validate_embedding(
+        self,
+        embedding: object,
+    ) -> list[float]:
+        if not isinstance(embedding, list) or not embedding:
+            raise BusinessException(ErrorCode.EMBEDDING_503)
+
+        if any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            for value in embedding
+        ):
+            raise BusinessException(ErrorCode.EMBEDDING_503)
+
+        if len(embedding) != settings.d102_embedding_dimension:
+            raise BusinessException(ErrorCode.EMBEDDING_503)
+
+        return [float(value) for value in embedding]
         
     def embed(self, text: str) -> list[float]:
         return self.embed_query(text)
@@ -51,9 +70,11 @@ class EmbeddingService:
             raise BusinessException(ErrorCode.EMBEDDING_503) from exc
 
         try:
-            return body["data"][0]["embedding"]
+            embedding = body["data"][0]["embedding"]
         except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise BusinessException(ErrorCode.EMBEDDING_503) from exc
+
+        return self._validate_embedding(embedding)
 
     @upstage_retry(upstage_key_pool)
     def _request_embedding(

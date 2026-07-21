@@ -20,33 +20,41 @@ class ScheduleContextService:
         self,
         request: RecommendationRequest,
     ) -> str:
-        semantic_words: list[str] = []
+        event_title = " ".join(
+            request.event_title.split()
+        )
+
+        parts = [event_title]
+
+        def append_if_not_duplicated(
+            value: str,
+            prefix: str = "",
+        ) -> None:
+            normalized_value = " ".join(value.split())
+
+            if not normalized_value:
+                return
+
+            current_text = " ".join(parts).casefold()
+
+            if normalized_value.casefold() in current_text:
+                return
+
+            parts.append(f"{prefix}{normalized_value}")
 
         for word in request.embedding_words:
-            normalized_word = word.strip()
-
-            if not normalized_word:
-                continue
-
-            if normalized_word not in semantic_words:
-                semantic_words.append(normalized_word)
-
-        if semantic_words:
-            parts = [" ".join(semantic_words)]
-        else:
-            parts = [request.event_title.strip()]
+            append_if_not_duplicated(word)
 
         if request.place_candidate:
-            place = request.place_candidate.strip()
-
-            if place:
-                parts.append(f"장소: {place}")
+            append_if_not_duplicated(
+                request.place_candidate,
+                prefix="장소: ",
+            )
 
         if request.description:
-            description = request.description.strip()[:100]
-
-            if description:
-                parts.append(description)
+            append_if_not_duplicated(
+                request.description[:100],
+            )
 
         return ". ".join(parts)
     
