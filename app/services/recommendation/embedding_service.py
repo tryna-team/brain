@@ -5,42 +5,97 @@ import requests
 from app.core.config import settings
 from app.core.exceptions import BusinessException
 from app.core.error_code import ErrorCode
+from app.core.upstage_key_pool import upstage_key_pool
+from app.core.upstage_retry import upstage_retry
 
 
 class EmbeddingService:
     def __init__(self) -> None:
-        self.api_key = settings.upstage_api_key
-        self.model = settings.upstage_embedding_model
+        self.model = settings.upstage_query_embedding_model
+        self.passage_model = settings.upstage_passage_embedding_model
         self.base_url = "https://api.upstage.ai/v1/embeddings"
+        self._key_pool = upstage_key_pool
 
+    def _validate_embedding(
+        self,
+        embedding: object,
+    ) -> list[float]:
+        if not isinstance(embedding, list) or not embedding:
+            raise BusinessException(ErrorCode.EMBEDDING_503)
+
+        if any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            for value in embedding
+        ):
+            raise BusinessException(ErrorCode.EMBEDDING_503)
+
+        if len(embedding) != settings.d102_embedding_dimension:
+            raise BusinessException(ErrorCode.EMBEDDING_503)
+
+        return [float(value) for value in embedding]
+        
     def embed(self, text: str) -> list[float]:
+        return self.embed_query(text)
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed(
+            text=text,
+            model=self.model,
+        )
+
+    def embed_passage(self, text: str) -> list[float]:
+        return self._embed(
+            text=text,
+            model=self.passage_model,
+        )
+
+    def _embed(
+        self,
+        text: str,
+        model: str,
+    ) -> list[float]:
         if not text or not text.strip():
             raise BusinessException(ErrorCode.EMBEDDING_400)
 
-        if not self.api_key:
+        if not self._key_pool.is_configured:
             raise BusinessException(ErrorCode.EMBEDDING_503)
-        
+
         try:
-            response = requests.post(
-                self.base_url,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "input": text.strip(),
-                },
-                timeout=10,
+            body = self._request_embedding(
+                text=text.strip(),
+                model=model,
             )
-            response.raise_for_status()
         except requests.RequestException as exc:
             raise BusinessException(ErrorCode.EMBEDDING_503) from exc
 
         try:
-            body = response.json()
             embedding = body["data"][0]["embedding"]
         except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise BusinessException(ErrorCode.EMBEDDING_503) from exc
 
-        return embedding
+        return self._validate_embedding(embedding)
+
+    @upstage_retry(upstage_key_pool)
+    def _request_embedding(
+        self,
+        text: str,
+        model: str,
+        *,
+        api_key: str,
+    ) -> dict:
+        response = requests.post(
+            self.base_url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "input": text,
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+
+        return response.json()

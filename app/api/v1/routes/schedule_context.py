@@ -7,11 +7,15 @@ from app.core.deps import RecommendationServiceDep
 from app.schemas.recommendation.pipeline import PipelineStep
 from app.schemas.recommendation.recommendation import RecommendationRequest
 from app.schemas.recommendation.schedule_context import ScheduleContextResult
+from app.schemas.recommendation.candidates import CandidateSearchResult
 
 router = APIRouter(tags=["Recommendation"])
 
 
-@router.post("/recommendations", response_model=ScheduleContextResult)
+@router.post(
+        "/recommendations",
+        response_model= ScheduleContextResult | CandidateSearchResult
+)
 def get_recommendations(
     request: RecommendationRequest,
     service: RecommendationServiceDep,
@@ -19,7 +23,7 @@ def get_recommendations(
         default=None,
         description="개발용: 지정한 단계까지 실행하고 해당 결과를 반환합니다.",
     ),
-) -> ScheduleContextResult:
+) -> ScheduleContextResult | CandidateSearchResult:
     if settings.app_env == "prod" and stop_after_step is not None:
         raise BusinessException(ErrorCode.COMMON_403, "운영 환경에서는 중간 결과를 조회할 수 없습니다.")
     return service.run_pipeline(

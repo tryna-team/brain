@@ -19,15 +19,15 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPOSITORY }}
-      ECS_CLUSTER: ${{ secrets.AWS_ECS_CLUSTER }}
-      ECS_SERVICE: ${{ secrets.AWS_ECS_SERVICE }}
-      ECS_TASK_DEFINITION_FAMILY: ${{ secrets.AWS_ECS_TASK_DEFINITION_FAMILY }}
-      CONTAINER_NAME: ${{ secrets.AWS_CONTAINER_NAME }}
+      AWS_REGION: ap-northeast-2
+      ECR_REPOSITORY: tryna-brain
+      ECS_CLUSTER: tryna-ecs-cluster
+      ECS_SERVICE: tryna-brain-svc
+      ECS_TASK_DEFINITION_FAMILY: tryna-brain-task
+      CONTAINER_NAME: brain-container
       # /ai 접두사를 떼어내는 Nginx 사이드카 컨테이너 (ECS Task Definition에 미리 추가되어 있어야 함)
-      NGINX_ECR_REPOSITORY: ${{ secrets.AWS_NGINX_ECR_REPOSITORY }}
-      NGINX_CONTAINER_NAME: ${{ secrets.AWS_NGINX_CONTAINER_NAME }}
+      NGINX_ECR_REPOSITORY: tryna-brain-nginx
+      NGINX_CONTAINER_NAME: brain-nignx-container
 
     steps:
       - name: Checkout code
@@ -118,11 +118,15 @@ jobs:
             NEO4J_PASSWORD=${{ secrets.NEO4J_PASSWORD }}
             NEO4J_DATABASE=${{ secrets.NEO4J_DATABASE }}
             UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}
-            UPSTAGE_EMBEDDING_MODEL=${{ secrets.UPSTAGE_EMBEDDING_MODEL }}
+            UPSTAGE_API_KEY_MULTI=${{ secrets.UPSTAGE_API_KEY_MULTI }}
             INTERNAL_API_KEY=${{ secrets.INTERNAL_API_KEY }}
-            VALKEY_HOST=${{ secrets.VALKEY_HOST }}
-            VALKEY_PORT=${{ secrets.VALKEY_PORT }}
-            VALKEY_PASSWORD=${{ secrets.VALKEY_PASSWORD }}
+            UPSTAGE_QUERY_EMBEDDING_MODEL=solar-embedding-1-large-query
+            UPSTAGE_PASSAGE_EMBEDDING_MODEL=solar-embedding-1-large-passage
+            D102_EMBEDDING_DIMENSION=4096
+            D102_EVENT_TYPE_MIN_SCORE=0.6
+            D102_CONTEXT_MIN_SCORE=0.6
+            D102_PLACE_TYPE_MIN_SCORE=0.6
+            D102_RECOMMENDATION_MIN_SCORE=0.6
 
       # 새 이미지로 Task Definition 갱신 (Nginx 사이드카 컨테이너)
       # NGINX_CONTAINER_NAME은 ECS 작업 정의에 미리 등록되어 있어야 한다.

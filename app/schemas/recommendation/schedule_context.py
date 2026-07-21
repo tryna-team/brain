@@ -1,13 +1,59 @@
-from pydantic import BaseModel, ConfigDict, Field
-from app.schemas.types import SourceType, ConfidenceLevel
+from datetime import date, time
+from typing import Literal
 
-# D101 일정 맥락 구조화 결과 DTO
+from pydantic import BaseModel, ConfigDict, Field
+
+
+EmbeddingStatus = Literal["ready", "error"]
+
+
+class DateCandidate(BaseModel):
+    value: date
+
+
+class TimeCandidate(BaseModel):
+    value: time
+
+
+class ScheduleContext(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    date_candidate: DateCandidate | None = Field(
+        default=None,
+        alias="dateCandidate",
+    )
+    time_candidate: TimeCandidate | None = Field(
+        default=None,
+        alias="timeCandidate",
+    )
+    place_candidate: str | None = Field(
+        default=None,
+        alias="placeCandidate",
+    )
+
+
+class EmbeddingMeta(BaseModel):
+    model: str
+    profile: Literal["query"] = "query"
+    dimension: int
+
+
 class ScheduleContextResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    
-    event_id: int = Field(alias= "eventId")
-    source_type: SourceType = Field(alias= "sourceType")
-    event_type_candidate: str = Field(alias= "eventTypeCandidate")
-    context_candidates: list[str] = Field(default_factory=list, alias= "contextCandidates")
-    place_type_candidate: str | None = Field(default= None, alias= "placeTypeCandidate")
-    confidence_level: ConfidenceLevel = Field(alias= "confidenceLevel")
+
+    temp_event_id: str = Field(alias= "tempEventId")
+    draft_revision: int = Field(alias="draftRevision")
+    query_embedding: list[float] | None = Field(
+        default=None,
+        alias="queryEmbedding",
+    )
+    embedding_status: EmbeddingStatus = Field(alias="embeddingStatus")
+    semantic_input_version: str = Field(
+        default="v1",
+        alias="semanticInputVersion",
+    )
+    schedule_context: ScheduleContext = Field(alias="scheduleContext")
+    embedding_meta: EmbeddingMeta | None = Field(
+        default=None,
+        alias="embeddingMeta",
+    )

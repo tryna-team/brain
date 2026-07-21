@@ -19,7 +19,6 @@ class ErrorCode(Enum):
     EMBEDDING_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "임베딩 모델 연동을 사용할 수 없습니다.")
 
     NEO4J_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "Neo4j 연결을 사용할 수 없습니다.")
-    VALKEY_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "Redis(Valkey) 연결을 사용할 수 없습니다.")
     LLM_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "LLM 연동을 사용할 수 없습니다.")
 
 
