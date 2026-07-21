@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,16 +20,14 @@ class Settings(BaseSettings):
 
     upstage_api_key: str | None = None
     upstage_api_key_multi: str | None = None
-    upstage_embedding_model: str = "solar-embedding-1-large-query"
+    upstage_query_embedding_model: str = "solar-embedding-1-large-query"
+    upstage_passage_embedding_model: str = "solar-embedding-1-large-passage"
 
-    internal_api_key: str | None = None
-
-    valkey_host: str | None = None
-    valkey_port: int = 6379
-    valkey_password: str | None = None
-    valkey_db: int = 0
-    valkey_key_prefix: str = "tryna:brain"
-    valkey_candidate_vector_ttl_seconds: int = 60 * 60 * 24 * 30
+    d102_embedding_dimension: int = 4096
+    d102_event_type_min_score: float = Field(ge=0.0, le=1.0)
+    d102_context_min_score: float = Field(ge=0.0, le=1.0)
+    d102_place_type_min_score: float = Field(ge=0.0, le=1.0)
+    d102_recommendation_min_score: float = Field(ge=0.0, le=1.0)
 
     model_config = SettingsConfigDict(
         env_file=".env",
