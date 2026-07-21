@@ -6,9 +6,9 @@ from app.services.event_preview_service import preview_event
 
 
 def test_preview_event_returns_start_date_and_start_time_with_seconds():
-    result = preview_event(EventPreviewRequest(sourceText="금요일 3시 팀플 회의"))
+    result = preview_event(EventPreviewRequest(eventTitle="금요일 3시 팀플 회의"))
 
-    assert result.source_text == "금요일 3시 팀플 회의"
+    assert result.event_title == "금요일 3시 팀플 회의"
     assert result.start_date is not None
     assert result.end_date is None
     assert result.start_time == "15:00:00"
@@ -19,7 +19,7 @@ def test_preview_event_returns_start_date_and_start_time_with_seconds():
 
 
 def test_preview_event_keeps_ambiguous_time_out_of_start_time():
-    result = preview_event(EventPreviewRequest(sourceText="내일 오후에 팀플 회의"))
+    result = preview_event(EventPreviewRequest(eventTitle="내일 오후에 팀플 회의"))
 
     assert result.start_date is not None
     assert result.start_time is None
@@ -29,7 +29,7 @@ def test_preview_event_keeps_ambiguous_time_out_of_start_time():
 
 
 def test_preview_event_defaults_missing_date_to_today():
-    result = preview_event(EventPreviewRequest(sourceText="팀플 회의"))
+    result = preview_event(EventPreviewRequest(eventTitle="팀플 회의"))
 
     assert result.start_date == datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
     assert result.needs_confirmation is False
@@ -37,10 +37,10 @@ def test_preview_event_defaults_missing_date_to_today():
 
 
 def test_preview_event_response_keeps_camel_case_json_contract():
-    result = preview_event(EventPreviewRequest(sourceText="금요일 3시 팀플 회의"))
+    result = preview_event(EventPreviewRequest(eventTitle="금요일 3시 팀플 회의"))
     payload = result.model_dump(by_alias=True)
 
-    assert payload["sourceText"] == "금요일 3시 팀플 회의"
+    assert payload["eventTitle"] == "금요일 3시 팀플 회의"
     assert payload["startDate"] is not None
     assert payload["startTime"] == "15:00:00"
     assert payload["placeCandidate"] is None
