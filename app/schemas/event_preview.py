@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class EventPreviewRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    source_text: str = Field(alias="sourceText")
+    event_title: str = Field(alias="eventTitle")
 
 
 class EventPreviewWarning(BaseModel):
@@ -15,7 +15,7 @@ class EventPreviewWarning(BaseModel):
 class EventPreviewResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    source_text: str = Field(alias="sourceText")
+    event_title: str = Field(alias="eventTitle")
     start_date: str | None = Field(default=None, alias="startDate")
     end_date: str | None = Field(default=None, alias="endDate")
     start_time: str | None = Field(default=None, alias="startTime")

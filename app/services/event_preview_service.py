@@ -17,17 +17,17 @@ TIME_WITH_SECONDS_PART_COUNT = 3
 
 
 def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
-    source_text = request.source_text.strip()
-    if not source_text:
+    event_title = request.event_title.strip()
+    if not event_title:
         raise BusinessException(ErrorCode.COMMON_400)
 
-    parsed_event = parse_event_text(source_text)
+    parsed_event = parse_event_text(event_title)
     warnings = _build_warnings(parsed_event)
     start_date = parsed_event.start_date or datetime.now(ASIA_SEOUL).date().isoformat()
     start_time = _format_time_with_seconds(parsed_event.start_time)
 
     return EventPreviewResponse(
-        source_text=parsed_event.source_text,
+        event_title=parsed_event.source_text,
         start_date=start_date,
         end_date=parsed_event.end_date,
         start_time=start_time,
