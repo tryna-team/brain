@@ -1,8 +1,22 @@
-from datetime import date
+from datetime import date, datetime, timezone
 
 from app.services.parser_service import parse_event_text
 
 
+
+
+def test_today_helper_uses_asia_seoul_date_boundary(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    class FixedDateTime:
+        @classmethod
+        def now(cls, tz=None):
+            utc_time = datetime(2026, 7, 21, 15, 30, tzinfo=timezone.utc)
+            return utc_time.astimezone(tz)
+
+    monkeypatch.setattr(parser_service, "datetime", FixedDateTime)
+
+    assert parser_service._today_in_service_timezone() == date(2026, 7, 22)
 
 def test_relative_dates_use_service_timezone_today(monkeypatch):
     import app.services.parser_service as parser_service
