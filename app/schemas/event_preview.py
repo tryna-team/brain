@@ -1,8 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EventPreviewRequest(BaseModel):
-    sourceText: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_text: str = Field(alias="sourceText")
 
 
 class EventPreviewWarning(BaseModel):
@@ -11,13 +13,15 @@ class EventPreviewWarning(BaseModel):
 
 
 class EventPreviewResponse(BaseModel):
-    sourceText: str
-    startDate: str | None = None
-    endDate: str | None = None
-    startTime: str | None = None
-    endTime: str | None = None
-    placeCandidate: str | None = None
-    toEmbedding: list[str]
-    isAllDayCandidate: bool
-    needsConfirmation: bool
-    warnings: list[EventPreviewWarning] = []
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_text: str = Field(alias="sourceText")
+    start_date: str | None = Field(default=None, alias="startDate")
+    end_date: str | None = Field(default=None, alias="endDate")
+    start_time: str | None = Field(default=None, alias="startTime")
+    end_time: str | None = Field(default=None, alias="endTime")
+    place_candidate: str | None = Field(default=None, alias="placeCandidate")
+    to_embedding: list[str] = Field(alias="toEmbedding")
+    is_all_day_candidate: bool = Field(alias="isAllDayCandidate")
+    needs_confirmation: bool = Field(alias="needsConfirmation")
+    warnings: list[EventPreviewWarning] = Field(default_factory=list)

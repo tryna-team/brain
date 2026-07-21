@@ -8,29 +8,42 @@ from app.services.event_preview_service import preview_event
 def test_preview_event_returns_start_date_and_start_time_with_seconds():
     result = preview_event(EventPreviewRequest(sourceText="금요일 3시 팀플 회의"))
 
-    assert result.sourceText == "금요일 3시 팀플 회의"
-    assert result.startDate is not None
-    assert result.endDate is None
-    assert result.startTime == "15:00:00"
-    assert result.endTime is None
-    assert result.placeCandidate is None
-    assert result.toEmbedding == ["팀플", "회의"]
-    assert result.isAllDayCandidate is False
+    assert result.source_text == "금요일 3시 팀플 회의"
+    assert result.start_date is not None
+    assert result.end_date is None
+    assert result.start_time == "15:00:00"
+    assert result.end_time is None
+    assert result.place_candidate is None
+    assert result.to_embedding == ["팀플", "회의"]
+    assert result.is_all_day_candidate is False
 
 
 def test_preview_event_keeps_ambiguous_time_out_of_start_time():
     result = preview_event(EventPreviewRequest(sourceText="내일 오후에 팀플 회의"))
 
-    assert result.startDate is not None
-    assert result.startTime is None
-    assert result.isAllDayCandidate is True
-    assert result.needsConfirmation is True
+    assert result.start_date is not None
+    assert result.start_time is None
+    assert result.is_all_day_candidate is True
+    assert result.needs_confirmation is True
     assert any(warning.code == "TIME_AMBIGUOUS" for warning in result.warnings)
 
 
 def test_preview_event_defaults_missing_date_to_today():
     result = preview_event(EventPreviewRequest(sourceText="팀플 회의"))
 
-    assert result.startDate == datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
-    assert result.needsConfirmation is False
+    assert result.start_date == datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
+    assert result.needs_confirmation is False
     assert all(warning.code != "DATE_MISSING" for warning in result.warnings)
+
+
+def test_preview_event_response_keeps_camel_case_json_contract():
+    result = preview_event(EventPreviewRequest(sourceText="금요일 3시 팀플 회의"))
+    payload = result.model_dump(by_alias=True)
+
+    assert payload["sourceText"] == "금요일 3시 팀플 회의"
+    assert payload["startDate"] is not None
+    assert payload["startTime"] == "15:00:00"
+    assert payload["placeCandidate"] is None
+    assert payload["toEmbedding"] == ["팀플", "회의"]
+    assert payload["isAllDayCandidate"] is False
+    assert payload["needsConfirmation"] is False
