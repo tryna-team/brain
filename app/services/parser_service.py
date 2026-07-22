@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 try:
     from kiwipiepy import Kiwi
@@ -68,6 +69,7 @@ EMBEDDING_POS_PREFIXES = ("N",)
 EMBEDDING_POS_TAGS = {"SL", "SN"}
 EMBEDDING_STOP_WORDS = {"것", "수", "등"}
 KIWI = Kiwi() if Kiwi else None
+SERVICE_TIMEZONE = ZoneInfo("Asia/Seoul")
 
 
 @dataclass(frozen=True)
@@ -104,6 +106,11 @@ class ExtractedTime:
     end_value: str | None = None
     text: str | None = None
     is_ambiguous: bool = False
+
+
+def _today_in_service_timezone() -> date:
+    """서버 실행 환경과 무관하게 서비스 기준 시간대의 오늘 날짜를 반환합니다."""
+    return datetime.now(SERVICE_TIMEZONE).date()
 
 
 def parse_event_text(source_text: str) -> ParsedEvent:
@@ -143,7 +150,7 @@ def parse_event_text(source_text: str) -> ParsedEvent:
 
 def _extract_date(source_text: str) -> ExtractedValue:
     """절대 날짜, 상대 날짜, 요일 표현 중 원문에서 가장 먼저 나온 날짜 후보를 반환합니다."""
-    today = date.today()
+    today = _today_in_service_timezone()
     candidates: list[tuple[int, ExtractedValue]] = []
     removable_texts: list[str] = []
 
