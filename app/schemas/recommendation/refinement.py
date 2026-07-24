@@ -39,6 +39,7 @@ class RefinedRecommendationItem(BaseModel):
     target_type: str = Field(alias="targetType")
     suggestion_level: str = Field(alias="suggestionLevel")
     default_timing: str = Field(alias="defaultTiming")
+    offset_days: int | None = Field(default=None, alias="offsetDays")
     selection_rank: int = Field(alias="selectionRank", ge=1, le=3)
 
 

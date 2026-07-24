@@ -105,6 +105,7 @@ class RecommendationRefinementService:
                     targetType=candidate.target_type,
                     suggestionLevel=candidate.suggestion_level,
                     defaultTiming=candidate.default_timing,
+                    offsetDays=candidate.offset_days,
                     selectionRank=len(refined_items) + 1,
                 )
             )
@@ -145,6 +146,7 @@ class RecommendationRefinementService:
                 targetType=candidate.target_type,
                 suggestionLevel=candidate.suggestion_level,
                 defaultTiming=candidate.default_timing,
+                offsetDays=candidate.offset_days,
                 selectionRank=index,
             )
             for index, candidate in enumerate(

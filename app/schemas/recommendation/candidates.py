@@ -25,6 +25,7 @@ class RecommendationCandidate(BaseModel):
     target_type: str = Field(alias= "targetType")
     suggestion_level: str = Field(alias= "suggestionLevel")
     default_timing: str = Field(alias= "defaultTiming")
+    offset_days: int | None = Field(default=None, alias="offsetDays")
     default_rank: int | None = Field(default=None, alias="defaultRank")
     vector_score: float | None = Field(default=None, alias="vectorScore")
     matched_by: list[MatchedBy] = Field(default_factory=list, alias= "matchedBy")
