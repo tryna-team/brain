@@ -63,12 +63,22 @@ class ScheduleContextService:
         request: RecommendationRequest,
     ) -> ScheduleContext:
         return ScheduleContext(
-            dateCandidate=DateCandidate(
+            startDateCandidate=DateCandidate(
                 value=request.start_date_candidate
             ),
-            timeCandidate=(
+            startTimeCandidate=(
                 TimeCandidate(value=request.start_time_candidate)
                 if request.start_time_candidate is not None
+                else None
+            ),
+            endDateCandidate=(
+                DateCandidate(value=request.end_date_candidate)
+                if request.end_date_candidate is not None
+                else None
+            ),
+            endTimeCandidate=(
+                TimeCandidate(value=request.end_time_candidate)
+                if request.end_time_candidate is not None
                 else None
             ),
             placeCandidate=request.place_candidate,
