@@ -38,6 +38,15 @@ def test_preview_event_defaults_missing_date_to_today():
     assert all(warning.code != "DATE_MISSING" for warning in result.warnings)
 
 
+
+def test_preview_event_returns_explicit_date_source_for_absolute_date():
+    result = preview_event(EventPreviewRequest(eventTitle="2026년 8월 22일 부산 전시회"))
+    payload = result.model_dump(by_alias=True)
+
+    assert result.start_date == "2026-08-22"
+    assert result.date_source == "EXPLICIT"
+    assert payload["dateSource"] == "EXPLICIT"
+
 def test_preview_event_response_keeps_camel_case_json_contract():
     result = preview_event(EventPreviewRequest(eventTitle="금요일 3시 팀플 회의"))
     payload = result.model_dump(by_alias=True)

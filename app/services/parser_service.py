@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from app.schemas.types import DATE_SOURCE_VALUES, DateSource
+
 try:
     from kiwipiepy import Kiwi
 except ImportError:
@@ -71,6 +73,10 @@ EMBEDDING_STOP_WORDS = {"것", "수", "등"}
 KIWI = Kiwi() if Kiwi else None
 SERVICE_TIMEZONE = ZoneInfo("Asia/Seoul")
 
+def _validate_date_source(date_source: str | None) -> None:
+    if date_source is not None and date_source not in DATE_SOURCE_VALUES:
+        raise ValueError(f"Unsupported date_source: {date_source}")
+
 
 @dataclass(frozen=True)
 class ParsedEvent:
@@ -78,7 +84,7 @@ class ParsedEvent:
 
     source_text: str
     start_date: str | None
-    date_source: str | None
+    date_source: DateSource | None
     end_date: str | None
     start_time: str | None
     end_time: str | None
@@ -86,6 +92,9 @@ class ParsedEvent:
     to_embedding: list[str]
     is_past_date: bool
     is_time_ambiguous: bool
+
+    def __post_init__(self) -> None:
+        _validate_date_source(self.date_source)
 
 
 @dataclass(frozen=True)
@@ -95,9 +104,12 @@ class ExtractedValue:
     value: str | None
     text: str | None = None
     removable_texts: tuple[str, ...] = ()
-    date_source: str | None = None
+    date_source: DateSource | None = None
     is_past: bool = False
     is_ambiguous: bool = False
+
+    def __post_init__(self) -> None:
+        _validate_date_source(self.date_source)
 
 
 @dataclass(frozen=True)
