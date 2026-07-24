@@ -22,7 +22,7 @@ class LLMRefinedItem(BaseModel):
 class LLMRefinementResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    refined_items: list[LLMRefinedItem] = Field(default_factory=list, alias="refinedItems")
+    refined_items: list[LLMRefinedItem] = Field(alias="refinedItems")
 
 
 class RefinementModelMeta(BaseModel):
