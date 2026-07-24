@@ -17,6 +17,7 @@ class EventPreviewResponse(BaseModel):
 
     event_title: str = Field(alias="eventTitle")
     start_date: str | None = Field(default=None, alias="startDate")
+    date_source: str | None = Field(default=None, alias="dateSource")
     end_date: str | None = Field(default=None, alias="endDate")
     start_time: str | None = Field(default=None, alias="startTime")
     end_time: str | None = Field(default=None, alias="endTime")

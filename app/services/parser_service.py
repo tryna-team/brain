@@ -78,6 +78,7 @@ class ParsedEvent:
 
     source_text: str
     start_date: str | None
+    date_source: str | None
     end_date: str | None
     start_time: str | None
     end_time: str | None
@@ -94,6 +95,7 @@ class ExtractedValue:
     value: str | None
     text: str | None = None
     removable_texts: tuple[str, ...] = ()
+    date_source: str | None = None
     is_past: bool = False
     is_ambiguous: bool = False
 
@@ -138,6 +140,7 @@ def parse_event_text(source_text: str) -> ParsedEvent:
     return ParsedEvent(
         source_text=normalized_text,
         start_date=extracted_date.value,
+        date_source=extracted_date.date_source,
         end_date=None,
         start_time=extracted_time.start_value,
         end_time=extracted_time.end_value,
@@ -172,6 +175,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                     ExtractedValue(
                         value=parsed_date.isoformat(),
                         text=match.group(0),
+                        date_source="EXPLICIT",
                         is_past=parsed_date < today,
                     ),
                 )
@@ -189,7 +193,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
             candidates.append(
                 (
                     index,
-                    ExtractedValue(value=parsed_date.isoformat(), text=text),
+                    ExtractedValue(value=parsed_date.isoformat(), text=text, date_source="RELATIVE_EXPRESSION"),
                 )
             )
 
@@ -211,6 +215,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                         ExtractedValue(
                             value=parsed_date.isoformat(),
                             text=relative_week_text,
+                            date_source="RELATIVE_EXPRESSION",
                             is_past=parsed_date < today,
                         ),
                     )
@@ -232,6 +237,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                         ExtractedValue(
                             value=parsed_date.isoformat(),
                             text=this_week_text,
+                            date_source="RELATIVE_EXPRESSION",
                             is_past=parsed_date < today,
                         ),
                     )
@@ -250,7 +256,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 candidates.append(
                     (
                         next_week_index,
-                        ExtractedValue(value=parsed_date.isoformat(), text=next_week_text),
+                        ExtractedValue(value=parsed_date.isoformat(), text=next_week_text, date_source="RELATIVE_EXPRESSION"),
                     )
                 )
 
@@ -263,7 +269,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
             candidates.append(
                 (
                     weekday_index,
-                    ExtractedValue(value=parsed_date.isoformat(), text=removable_text),
+                    ExtractedValue(value=parsed_date.isoformat(), text=removable_text, date_source="RELATIVE_EXPRESSION"),
                 )
             )
 
@@ -273,6 +279,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
             value=selected.value,
             text=selected.text,
             removable_texts=_dedupe_longest_first(removable_texts),
+            date_source=selected.date_source,
             is_past=selected.is_past,
             is_ambiguous=selected.is_ambiguous,
         )
