@@ -9,6 +9,7 @@ from app.schemas.recommendation.recommendation import RecommendationRequest
 from app.schemas.recommendation.schedule_context import ScheduleContextResult
 from app.schemas.recommendation.candidates import CandidateSearchResult
 from app.schemas.recommendation.refinement import RecommendationRefinementResult
+from app.schemas.recommendation.temporal import TemporalValidationResult
 
 router = APIRouter(tags=["Recommendation"])
 
@@ -19,6 +20,7 @@ router = APIRouter(tags=["Recommendation"])
         ScheduleContextResult
         | CandidateSearchResult
         | RecommendationRefinementResult
+        | TemporalValidationResult
     ),
 )
 def get_recommendations(
@@ -32,6 +34,7 @@ def get_recommendations(
     ScheduleContextResult
     | CandidateSearchResult
     | RecommendationRefinementResult
+    | TemporalValidationResult
 ):
     if (
         settings.app_env == "prod"
