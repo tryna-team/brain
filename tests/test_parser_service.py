@@ -31,7 +31,16 @@ def test_relative_dates_use_service_timezone_today(monkeypatch):
     tomorrow_result = parser_service.parse_event_text("내일 팀플 회의")
 
     assert today_result.start_date == "2026-07-22"
+    assert today_result.date_source == "RELATIVE_EXPRESSION"
     assert tomorrow_result.start_date == "2026-07-23"
+    assert tomorrow_result.date_source == "RELATIVE_EXPRESSION"
+
+
+def test_explicit_date_source_is_marked_for_absolute_date():
+    result = parse_event_text("2026년 8월 22일 부산 전시회")
+
+    assert result.start_date == "2026-08-22"
+    assert result.date_source == "EXPLICIT"
 
 def test_month_day_slash_pattern_does_not_match_embedded_numeric_date():
     result = parse_event_text("2012/13/20 부산 전시회")
@@ -129,7 +138,9 @@ def test_week_aliases_are_parsed_as_this_and_next_week():
     assert next_week.start_date == canonical_next_week.start_date
     assert spaced_next_week.start_date == canonical_next_week.start_date
     assert this_week.to_embedding == ["팀플", "회의"]
+    assert this_week.date_source == "RELATIVE_EXPRESSION"
     assert next_week.to_embedding == ["팀플", "회의"]
+    assert next_week.date_source == "RELATIVE_EXPRESSION"
 
 
 class FakeKiwiToken:
