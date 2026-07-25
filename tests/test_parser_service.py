@@ -50,6 +50,48 @@ def test_explicit_date_source_is_marked_for_absolute_date():
     assert result.start_date == "2026-08-22"
     assert result.date_source == "EXPLICIT"
 
+def test_explicit_date_range_sets_start_and_end_date():
+    result = parse_event_text("8월 22일부터 8월 24일까지 부산 여행")
+
+    assert result.start_date == "2026-08-22"
+    assert result.end_date == "2026-08-24"
+    assert result.date_source == "EXPLICIT"
+    assert result.to_embedding == ["부산", "여행"]
+
+
+def test_relative_date_range_sets_start_and_end_date(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    monkeypatch.setattr(
+        parser_service,
+        "_today_in_service_timezone",
+        lambda: date(2026, 7, 22),
+    )
+
+    result = parser_service.parse_event_text("내일부터 모레까지 워크숍")
+
+    assert result.start_date == "2026-07-23"
+    assert result.end_date == "2026-07-24"
+    assert result.date_source == "RELATIVE_EXPRESSION"
+    assert result.to_embedding == ["워크숍"]
+
+
+def test_weekday_date_range_sets_start_and_end_date(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    monkeypatch.setattr(
+        parser_service,
+        "_today_in_service_timezone",
+        lambda: date(2026, 7, 22),
+    )
+
+    result = parser_service.parse_event_text("금요일부터 일요일까지 MT")
+
+    assert result.start_date == "2026-07-24"
+    assert result.end_date == "2026-07-26"
+    assert result.date_source == "RELATIVE_EXPRESSION"
+    assert result.to_embedding == ["MT"]
+
 def test_month_day_slash_pattern_does_not_match_embedded_numeric_date():
     result = parse_event_text("2012/13/20 부산 전시회")
 
