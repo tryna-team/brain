@@ -29,11 +29,19 @@ def test_relative_dates_use_service_timezone_today(monkeypatch):
 
     today_result = parser_service.parse_event_text("오늘 팀플 회의")
     tomorrow_result = parser_service.parse_event_text("내일 팀플 회의")
+    day_after_tomorrow_result = parser_service.parse_event_text("모레 팀플 회의")
+    three_days_later_result = parser_service.parse_event_text("글피 팀플 회의")
 
     assert today_result.start_date == "2026-07-22"
     assert today_result.date_source == "RELATIVE_EXPRESSION"
     assert tomorrow_result.start_date == "2026-07-23"
     assert tomorrow_result.date_source == "RELATIVE_EXPRESSION"
+    assert day_after_tomorrow_result.start_date == "2026-07-24"
+    assert day_after_tomorrow_result.date_source == "RELATIVE_EXPRESSION"
+    assert day_after_tomorrow_result.to_embedding == ["팀플", "회의"]
+    assert three_days_later_result.start_date == "2026-07-25"
+    assert three_days_later_result.date_source == "RELATIVE_EXPRESSION"
+    assert three_days_later_result.to_embedding == ["팀플", "회의"]
 
 
 def test_explicit_date_source_is_marked_for_absolute_date():
