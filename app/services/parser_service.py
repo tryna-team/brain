@@ -197,6 +197,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
         "오늘": today,
         "내일": today + timedelta(days=1),
         "모레": today + timedelta(days=2),
+        "글피": today + timedelta(days=3),
     }
     for text, parsed_date in relative_dates.items():
         index = source_text.find(text)
