@@ -14,7 +14,7 @@ class RecommendationRequest(BaseModel):
     start_time_candidate: time | None = Field(default= None, alias= "startTimeCandidate")
     end_date_candidate: date | None = Field(default= None, alias= "endDateCandidate")
     end_time_candidate: time | None = Field(default= None, alias= "endTimeCandidate")
-    start_date_source: DateSource = Field(alias="startDateSource")
+    start_date_source: DateSource | None = Field(default=None, alias="startDateSource")
     place_candidate: str | None = Field(default= None, alias= "placeCandidate")
     description: str | None = None
     external_event_id : str | None = Field(default= None, alias= "externalEventId")
