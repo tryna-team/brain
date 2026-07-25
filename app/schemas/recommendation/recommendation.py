@@ -17,8 +17,6 @@ class RecommendationRequest(BaseModel):
     start_date_source: DateSource | None = Field(default=None, alias="startDateSource")
     place_candidate: str | None = Field(default= None, alias= "placeCandidate")
     description: str | None = None
-    external_event_id : str | None = Field(default= None, alias= "externalEventId")
-    provider: str | None = None # external_event_id 값이 존재하면 provider 값도 존재해야함 해당 검증 로직은 spring 서버에서 구현 예정
     embedding_words: list[str] = Field(default_factory=list, alias="embeddingWords")
 
 # /api/v1/recommendations responseDTO
