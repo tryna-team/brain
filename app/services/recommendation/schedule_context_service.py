@@ -64,7 +64,8 @@ class ScheduleContextService:
     ) -> ScheduleContext:
         return ScheduleContext(
             startDateCandidate=DateCandidate(
-                value=request.start_date_candidate
+                value=request.start_date_candidate,
+                dateSource=request.start_date_source,
             ),
             startTimeCandidate=(
                 TimeCandidate(value=request.start_time_candidate)
