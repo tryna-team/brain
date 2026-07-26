@@ -102,6 +102,7 @@ class ExtractedValue:
     """추출된 후보값과 원문에서 제거해야 할 텍스트, 보정 플래그를 함께 담습니다."""
 
     value: str | None
+    end_value: str | None = None
     text: str | None = None
     removable_texts: tuple[str, ...] = ()
     date_source: DateSource | None = None
@@ -153,7 +154,7 @@ def parse_event_text(source_text: str) -> ParsedEvent:
         source_text=normalized_text,
         start_date=extracted_date.value,
         date_source=extracted_date.date_source,
-        end_date=None,
+        end_date=extracted_date.end_value,
         start_time=extracted_time.start_value,
         end_time=extracted_time.end_value,
         place_candidate=extracted_place.value,
@@ -166,7 +167,7 @@ def parse_event_text(source_text: str) -> ParsedEvent:
 def _extract_date(source_text: str) -> ExtractedValue:
     """절대 날짜, 상대 날짜, 요일 표현 중 원문에서 가장 먼저 나온 날짜 후보를 반환합니다."""
     today = _today_in_service_timezone()
-    candidates: list[tuple[int, ExtractedValue]] = []
+    candidates: list[tuple[int, int, ExtractedValue]] = []
     removable_texts: list[str] = []
 
     for pattern in DATE_PATTERNS:
@@ -184,6 +185,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
             candidates.append(
                 (
                     match.start(),
+                    match.end(),
                     ExtractedValue(
                         value=parsed_date.isoformat(),
                         text=match.group(0),
@@ -206,6 +208,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
             candidates.append(
                 (
                     index,
+                    index + len(text),
                     ExtractedValue(value=parsed_date.isoformat(), text=text, date_source="RELATIVE_EXPRESSION"),
                 )
             )
@@ -225,6 +228,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 candidates.append(
                     (
                         relative_week_index,
+                        relative_week_index + len(relative_week_text),
                         ExtractedValue(
                             value=parsed_date.isoformat(),
                             text=relative_week_text,
@@ -247,6 +251,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 candidates.append(
                     (
                         this_week_index,
+                        this_week_index + len(this_week_text),
                         ExtractedValue(
                             value=parsed_date.isoformat(),
                             text=this_week_text,
@@ -269,6 +274,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 candidates.append(
                     (
                         next_week_index,
+                        next_week_index + len(next_week_text),
                         ExtractedValue(value=parsed_date.isoformat(), text=next_week_text, date_source="RELATIVE_EXPRESSION"),
                     )
                 )
@@ -282,12 +288,17 @@ def _extract_date(source_text: str) -> ExtractedValue:
             candidates.append(
                 (
                     weekday_index,
+                    weekday_index + len(removable_text),
                     ExtractedValue(value=parsed_date.isoformat(), text=removable_text, date_source="RELATIVE_EXPRESSION"),
                 )
             )
 
+    date_range = _extract_date_range(source_text, candidates, removable_texts)
+    if date_range.value is not None:
+        return date_range
+
     if candidates:
-        selected = min(candidates, key=lambda candidate: candidate[0])[1]
+        selected = min(candidates, key=lambda candidate: candidate[0])[2]
         return ExtractedValue(
             value=selected.value,
             text=selected.text,
@@ -299,6 +310,67 @@ def _extract_date(source_text: str) -> ExtractedValue:
 
     return ExtractedValue(value=None)
 
+
+def _extract_date_range(
+    source_text: str,
+    candidates: list[tuple[int, int, ExtractedValue]],
+    removable_texts: list[str],
+) -> ExtractedValue:
+    """A부터 B까지 형태의 날짜 범위를 시작일/종료일 후보로 분리합니다."""
+    sorted_candidates = sorted(candidates, key=lambda candidate: candidate[0])
+    for start_index, start_end, start_date in sorted_candidates:
+        for end_index, end_end, end_date in sorted_candidates:
+            if end_index <= start_index:
+                continue
+
+            between = source_text[start_end:end_index]
+            after = source_text[end_end:]
+            until_match = re.match(r"\s*까지", after)
+            if not _is_date_range_connector(between, until_match):
+                continue
+
+            if _is_inverted_date_range(start_date, end_date):
+                continue
+
+            removable_text = source_text[start_index : end_end + until_match.end()]
+            removable_texts.append(removable_text)
+            return ExtractedValue(
+                value=start_date.value,
+                end_value=end_date.value,
+                text=removable_text,
+                removable_texts=_dedupe_longest_first(removable_texts),
+                date_source=_combine_date_source(start_date.date_source, end_date.date_source),
+                is_past=start_date.is_past,
+                is_ambiguous=start_date.is_ambiguous or end_date.is_ambiguous,
+            )
+
+    return ExtractedValue(value=None)
+
+
+def _is_date_range_connector(between: str, until_match: re.Match[str] | None) -> bool:
+    """두 날짜 후보 사이가 범위 연결 표현인지 확인합니다."""
+    if not until_match:
+        return False
+
+    return between.strip() in {"부터", "에서", "~", "-"}
+
+def _is_inverted_date_range(start_date: ExtractedValue, end_date: ExtractedValue) -> bool:
+    """종료일이 시작일보다 앞서는 뒤집힌 날짜 범위인지 확인합니다."""
+    if not start_date.value or not end_date.value:
+        return False
+
+    return date.fromisoformat(end_date.value) < date.fromisoformat(start_date.value)
+
+
+def _combine_date_source(start_source: DateSource | None, end_source: DateSource | None) -> DateSource | None:
+    """범위 날짜의 출처를 두 날짜 후보 기준으로 합칩니다."""
+    if start_source == "EXPLICIT" and end_source == "EXPLICIT":
+        return "EXPLICIT"
+
+    if start_source or end_source:
+        return "RELATIVE_EXPRESSION"
+
+    return None
 
 def _extract_time(source_text: str) -> ExtractedTime:
     """명확한 시간은 HH:mm으로, 시간 범위는 시작/종료 후보로 나누어 반환합니다."""
