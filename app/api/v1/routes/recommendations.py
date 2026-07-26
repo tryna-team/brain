@@ -5,11 +5,12 @@ from app.core.error_code import ErrorCode
 from app.core.exceptions import BusinessException
 from app.core.deps import RecommendationServiceDep
 from app.schemas.recommendation.pipeline import PipelineStep
-from app.schemas.recommendation.recommendation import RecommendationRequest
+from app.schemas.recommendation.recommendation import RecommendationRequest, RecommendationResponse
 from app.schemas.recommendation.schedule_context import ScheduleContextResult
 from app.schemas.recommendation.candidates import CandidateSearchResult
 from app.schemas.recommendation.refinement import RecommendationRefinementResult
 from app.schemas.recommendation.temporal import TemporalValidationResult
+
 
 router = APIRouter(tags=["Recommendation"])
 
@@ -21,6 +22,7 @@ router = APIRouter(tags=["Recommendation"])
         | CandidateSearchResult
         | RecommendationRefinementResult
         | TemporalValidationResult
+        | RecommendationResponse
     ),
 )
 def get_recommendations(
@@ -35,6 +37,7 @@ def get_recommendations(
     | CandidateSearchResult
     | RecommendationRefinementResult
     | TemporalValidationResult
+    | RecommendationResponse
 ):
     if (
         settings.app_env == "prod"

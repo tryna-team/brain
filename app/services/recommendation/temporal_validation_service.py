@@ -75,6 +75,7 @@ class TemporalValidationService:
             sourceCode=item.source_code,
             displayText=item.display_text,
             itemType=item_type,
+            offsetDays=item.offset_days,
             displayDate=display_date,
             displayTime=None,
             actionType=item.action_type,
