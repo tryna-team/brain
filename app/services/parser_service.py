@@ -329,6 +329,9 @@ def _extract_date_range(
             if not _is_date_range_connector(between, until_match):
                 continue
 
+            if _is_inverted_date_range(start_date, end_date):
+                continue
+
             removable_text = source_text[start_index : end_end + until_match.end()]
             removable_texts.append(removable_text)
             return ExtractedValue(
@@ -350,6 +353,13 @@ def _is_date_range_connector(between: str, until_match: re.Match[str] | None) ->
         return False
 
     return between.strip() in {"부터", "에서", "~", "-"}
+
+def _is_inverted_date_range(start_date: ExtractedValue, end_date: ExtractedValue) -> bool:
+    """종료일이 시작일보다 앞서는 뒤집힌 날짜 범위인지 확인합니다."""
+    if not start_date.value or not end_date.value:
+        return False
+
+    return date.fromisoformat(end_date.value) < date.fromisoformat(start_date.value)
 
 
 def _combine_date_source(start_source: DateSource | None, end_source: DateSource | None) -> DateSource | None:
