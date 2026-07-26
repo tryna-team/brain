@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     upstage_api_key_multi: str | None = None
     upstage_query_embedding_model: str = "solar-embedding-1-large-query"
     upstage_passage_embedding_model: str = "solar-embedding-1-large-passage"
+    upstage_chat_model: str = "solar-pro3"
+    upstage_chat_timeout_seconds: float = Field(default=20.0, gt=0)
 
     d102_embedding_dimension: int = 4096
     d102_event_type_min_score: float = Field(ge=0.0, le=1.0)

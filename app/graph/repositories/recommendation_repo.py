@@ -238,7 +238,8 @@ class RecommendationRepo:
                     template.actionType AS actionType,
                     template.targetType AS targetType,
                     template.suggestionLevel AS suggestionLevel,
-                    template.defaultTiming AS defaultTiming
+                    template.defaultTiming AS defaultTiming,
+                    template.offsetDays AS offsetDays
                 """,
                 selected_event_type=selected_event_type,
                 resolved_contexts=resolved_contexts,
@@ -296,6 +297,7 @@ class RecommendationRepo:
                     target_type=record["targetType"],
                     suggestion_level=record["suggestionLevel"],
                     default_timing=record["defaultTiming"],
+                    offset_days=record["offsetDays"],
                     default_rank=default_rank,
                     vector_score=None,
                     matched_by=[matched_by],
@@ -413,6 +415,7 @@ class RecommendationRepo:
                     template.targetType AS targetType,
                     template.suggestionLevel AS suggestionLevel,
                     template.defaultTiming AS defaultTiming,
+                    template.offsetDays AS offsetDays,
 
                     score AS vectorScore
                 ORDER BY vectorScore DESC
@@ -479,6 +482,7 @@ class RecommendationRepo:
                     target_type=record["targetType"],
                     suggestion_level=record["suggestionLevel"],
                     default_timing=record["defaultTiming"],
+                    offset_days=record["offsetDays"],
                     default_rank=None,
                     vector_score=vector_score,
                     matched_by=[matched_by],

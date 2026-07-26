@@ -25,6 +25,7 @@ class RecommendationCandidateRecord:
     target_type: str
     suggestion_level: str
     default_timing: str
+    offset_days: int | None = None
     default_rank: int | None = None
     vector_score: float | None = None
     matched_by: list[MatchedByRecord] = field(default_factory=list)

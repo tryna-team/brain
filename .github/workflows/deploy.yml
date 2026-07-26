@@ -122,6 +122,8 @@ jobs:
             INTERNAL_API_KEY=${{ secrets.INTERNAL_API_KEY }}
             UPSTAGE_QUERY_EMBEDDING_MODEL=solar-embedding-1-large-query
             UPSTAGE_PASSAGE_EMBEDDING_MODEL=solar-embedding-1-large-passage
+            UPSTAGE_CHAT_MODEL=solar-pro3
+            UPSTAGE_CHAT_TIMEOUT_SECONDS=20
             D102_EMBEDDING_DIMENSION=4096
             D102_EVENT_TYPE_MIN_SCORE=0.6
             D102_CONTEXT_MIN_SCORE=0.6
