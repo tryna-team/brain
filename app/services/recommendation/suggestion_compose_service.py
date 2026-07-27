@@ -10,23 +10,23 @@ class SuggestionCompositionService:
         self,
         temporal_result: TemporalValidationResult,
     ) -> RecommendationResponse:
-        if temporal_result.temporal_status == "error":
+        if temporal_result.temporal_status == "ERROR":
             return RecommendationResponse(
                 tempEventId=temporal_result.temp_event_id,
                 draftRevision=temporal_result.draft_revision,
-                suggestionStatus="error",
+                suggestionStatus="ERROR",
                 suggestions=[],
                 errors=temporal_result.errors,
             )
 
         if (
-            temporal_result.temporal_status == "no_items"
+            temporal_result.temporal_status == "NO_ITEMS"
             or not temporal_result.items
         ):
             return RecommendationResponse(
                 tempEventId=temporal_result.temp_event_id,
                 draftRevision=temporal_result.draft_revision,
-                suggestionStatus="empty",
+                suggestionStatus="EMPTY",
                 suggestions=[],
                 errors=temporal_result.errors,
             )
@@ -61,7 +61,7 @@ class SuggestionCompositionService:
         return RecommendationResponse(
             tempEventId=temporal_result.temp_event_id,
             draftRevision=temporal_result.draft_revision,
-            suggestionStatus="ready",
+            suggestionStatus="READY",
             suggestions=suggestions,
             errors=errors,
         )

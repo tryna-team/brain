@@ -36,11 +36,11 @@ class RecommendationRefinementService:
         return RecommendationRefinementResult(
             tempEventId=request.temp_event_id,
             draftRevision=request.draft_revision,
-            refinementStatus="no_candidates",
+            refinementStatus="NO_CANDIDATES",
             promptVersion=PROMPT_VERSION,
             fewShotVersion=FEW_SHOT_VERSION,
             modelMeta={
-                "provider": "upstage",
+                "provider": "UPSTAGE",
                 "model": self.llm_service.model,
             },
             refinedItems=[],
@@ -113,11 +113,11 @@ class RecommendationRefinementService:
         return RecommendationRefinementResult(
             tempEventId=request.temp_event_id,
             draftRevision=request.draft_revision,
-            refinementStatus="success",
+            refinementStatus="SUCCESS",
             promptVersion=PROMPT_VERSION,
             fewShotVersion=FEW_SHOT_VERSION,
             modelMeta={
-                "provider": "upstage",
+                "provider": "UPSTAGE",
                 "model": self.llm_service.model,
             },
             refinedItems=refined_items,
@@ -158,11 +158,11 @@ class RecommendationRefinementService:
         return RecommendationRefinementResult(
             tempEventId=request.temp_event_id,
             draftRevision=request.draft_revision,
-            refinementStatus="fallback",
+            refinementStatus="FALLBACK",
             promptVersion=PROMPT_VERSION,
             fewShotVersion=FEW_SHOT_VERSION,
             modelMeta={
-                "provider": "upstage",
+                "provider": "UPSTAGE",
                 "model": self.llm_service.model,
             },
             refinedItems=refined_items,
@@ -179,11 +179,11 @@ class RecommendationRefinementService:
         return RecommendationRefinementResult(
             tempEventId=request.temp_event_id,
             draftRevision=request.draft_revision,
-            refinementStatus="error",
+            refinementStatus="ERROR",
             promptVersion=PROMPT_VERSION,
             fewShotVersion=FEW_SHOT_VERSION,
             modelMeta={
-                "provider": "upstage",
+                "provider": "UPSTAGE",
                 "model": self.llm_service.model,
             },
             refinedItems=[],
@@ -210,7 +210,7 @@ class RecommendationRefinementService:
                 message="Stale or mismatched D102 result.",
             )
         
-        if candidate_result.lookup_status == "error":
+        if candidate_result.lookup_status == "ERROR":
             return self._build_error_result(
                 request=request,
                 candidate_result=candidate_result,
@@ -219,7 +219,7 @@ class RecommendationRefinementService:
         
         if (
             candidate_result.lookup_status
-            in {"no_mapping", "no_candidates"}
+            in {"NO_MAPPING", "NO_CANDIDATES"}
             or not candidate_result.recommendation_candidates
         ):
             return self._build_no_candidates_result(

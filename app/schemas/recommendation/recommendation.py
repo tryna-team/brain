@@ -6,7 +6,7 @@ from app.schemas.types import SourceType, DateSource
 from app.schemas.recommendation.temporal import ItemType
 
 
-SuggestionStatus = Literal["ready", "empty", "error"]
+SuggestionStatus = Literal["READY", "EMPTY", "ERROR"]
 
 # /api/v1/recommendations requestDTO
 class RecommendationRequest(BaseModel):
@@ -53,4 +53,3 @@ class RecommendationResponse(BaseModel):
     suggestion_status: SuggestionStatus = Field(alias="suggestionStatus")
     suggestions: list[SuggestionItem] = Field(default_factory=list, max_length=3)
     errors: list[str] = Field(default_factory=list)
-

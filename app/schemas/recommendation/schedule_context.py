@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.types import DateSource
 
 
-EmbeddingStatus = Literal["ready", "error"]
+EmbeddingStatus = Literal["READY", "ERROR"]
 
 
 class DateCandidate(BaseModel):
@@ -31,7 +31,7 @@ class ScheduleContext(BaseModel):
 
 class EmbeddingMeta(BaseModel):
     model: str
-    profile: Literal["query"] = "query"
+    profile: Literal["QUERY"] = "QUERY"
     dimension: int
 
 
