@@ -189,7 +189,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                     ExtractedValue(
                         value=parsed_date.isoformat(),
                         text=match.group(0),
-                        date_source="EXPLICIT",
+                        date_source="explicit",
                         is_past=parsed_date < today,
                     ),
                 )
@@ -209,7 +209,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 (
                     index,
                     index + len(text),
-                    ExtractedValue(value=parsed_date.isoformat(), text=text, date_source="RELATIVE_EXPRESSION"),
+                    ExtractedValue(value=parsed_date.isoformat(), text=text, date_source="relative_expression"),
                 )
             )
 
@@ -232,7 +232,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                         ExtractedValue(
                             value=parsed_date.isoformat(),
                             text=relative_week_text,
-                            date_source="RELATIVE_EXPRESSION",
+                            date_source="relative_expression",
                             is_past=parsed_date < today,
                         ),
                     )
@@ -255,7 +255,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                         ExtractedValue(
                             value=parsed_date.isoformat(),
                             text=this_week_text,
-                            date_source="RELATIVE_EXPRESSION",
+                            date_source="relative_expression",
                             is_past=parsed_date < today,
                         ),
                     )
@@ -275,7 +275,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                     (
                         next_week_index,
                         next_week_index + len(next_week_text),
-                        ExtractedValue(value=parsed_date.isoformat(), text=next_week_text, date_source="RELATIVE_EXPRESSION"),
+                        ExtractedValue(value=parsed_date.isoformat(), text=next_week_text, date_source="relative_expression"),
                     )
                 )
 
@@ -289,7 +289,7 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 (
                     weekday_index,
                     weekday_index + len(removable_text),
-                    ExtractedValue(value=parsed_date.isoformat(), text=removable_text, date_source="RELATIVE_EXPRESSION"),
+                    ExtractedValue(value=parsed_date.isoformat(), text=removable_text, date_source="relative_expression"),
                 )
             )
 
@@ -364,11 +364,11 @@ def _is_inverted_date_range(start_date: ExtractedValue, end_date: ExtractedValue
 
 def _combine_date_source(start_source: DateSource | None, end_source: DateSource | None) -> DateSource | None:
     """범위 날짜의 출처를 두 날짜 후보 기준으로 합칩니다."""
-    if start_source == "EXPLICIT" and end_source == "EXPLICIT":
-        return "EXPLICIT"
+    if start_source == "explicit" and end_source == "explicit":
+        return "explicit"
 
     if start_source or end_source:
-        return "RELATIVE_EXPRESSION"
+        return "relative_expression"
 
     return None
 

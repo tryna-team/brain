@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 ASIA_SEOUL = ZoneInfo("Asia/Seoul")
 
 USABLE_DATE_SOURCES = {
-    "EXPLICIT",
-    "RELATIVE_EXPRESSION",
+    "explicit",
+    "relative_expression",
 }
 
 MAX_TIMED_ITEMS = 2
@@ -66,9 +66,9 @@ class TemporalValidationService:
         display_date: date | None,
     ) -> TemporalRecommendationItem:
         item_type = (
-            "TIMED_ACTION"
+            "timed_action"
             if display_date is not None
-            else "UNTIMED_PREP"
+            else "untimed_prep"
         )
 
         return TemporalRecommendationItem(
