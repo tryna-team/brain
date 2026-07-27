@@ -13,8 +13,8 @@ TemporalStatus = Literal[
 ]
 
 ItemType = Literal[
-    "TIMED_ACTION",
-    "UNTIMED_PREP",
+    "timed_action",
+    "untimed_prep",
 ]
 
 
