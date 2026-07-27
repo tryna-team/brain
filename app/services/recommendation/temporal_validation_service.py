@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 ASIA_SEOUL = ZoneInfo("Asia/Seoul")
 
 USABLE_DATE_SOURCES = {
-    "explicit",
-    "relative_expression",
+    "EXPLICIT",
+    "RELATIVE_EXPRESSION",
 }
 
 MAX_TIMED_ITEMS = 2
@@ -27,7 +27,7 @@ class TemporalValidationService:
         return TemporalValidationResult(
             tempEventId=refinement_result.temp_event_id,
             draftRevision=refinement_result.draft_revision,
-            temporalStatus="no_items",
+            temporalStatus="NO_ITEMS",
             items=[],
             scheduleContext=refinement_result.schedule_context,
             errors=[]
@@ -66,9 +66,9 @@ class TemporalValidationService:
         display_date: date | None,
     ) -> TemporalRecommendationItem:
         item_type = (
-            "timed_action"
+            "TIMED_ACTION"
             if display_date is not None
-            else "untimed_prep"
+            else "UNTIMED_PREP"
         )
 
         return TemporalRecommendationItem(
@@ -106,7 +106,7 @@ class TemporalValidationService:
         return TemporalValidationResult(
             tempEventId=refinement_result.temp_event_id,
             draftRevision=refinement_result.draft_revision,
-            temporalStatus="error",
+            temporalStatus="ERROR",
             items=fallback_items,
             scheduleContext=refinement_result.schedule_context,
             errors=[message],
@@ -151,7 +151,7 @@ class TemporalValidationService:
             return TemporalValidationResult(
                 tempEventId=refinement_result.temp_event_id,
                 draftRevision=refinement_result.draft_revision,
-                temporalStatus="success",
+                temporalStatus="SUCCESS",
                 items=temporal_items,
                 scheduleContext=refinement_result.schedule_context,
                 errors=[],

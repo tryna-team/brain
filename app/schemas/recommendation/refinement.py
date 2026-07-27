@@ -5,10 +5,10 @@ from app.schemas.recommendation.schedule_context import ScheduleContext
 
 
 RefinementStatus = Literal[
-    "success",
-    "no_candidates",
-    "fallback",
-    "error",
+    "SUCCESS",
+    "NO_CANDIDATES",
+    "FALLBACK",
+    "ERROR",
 ]
 
 
@@ -26,7 +26,7 @@ class LLMRefinementResponse(BaseModel):
 
 
 class RefinementModelMeta(BaseModel):
-    provider: Literal["upstage"] = "upstage"
+    provider: Literal["UPSTAGE"] = "UPSTAGE"
     model: str
 
 

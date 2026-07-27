@@ -33,14 +33,14 @@ def test_relative_dates_use_service_timezone_today(monkeypatch):
     three_days_later_result = parser_service.parse_event_text("글피 팀플 회의")
 
     assert today_result.start_date == "2026-07-22"
-    assert today_result.date_source == "relative_expression"
+    assert today_result.date_source == "RELATIVE_EXPRESSION"
     assert tomorrow_result.start_date == "2026-07-23"
-    assert tomorrow_result.date_source == "relative_expression"
+    assert tomorrow_result.date_source == "RELATIVE_EXPRESSION"
     assert day_after_tomorrow_result.start_date == "2026-07-24"
-    assert day_after_tomorrow_result.date_source == "relative_expression"
+    assert day_after_tomorrow_result.date_source == "RELATIVE_EXPRESSION"
     assert day_after_tomorrow_result.to_embedding == ["팀플", "회의"]
     assert three_days_later_result.start_date == "2026-07-25"
-    assert three_days_later_result.date_source == "relative_expression"
+    assert three_days_later_result.date_source == "RELATIVE_EXPRESSION"
     assert three_days_later_result.to_embedding == ["팀플", "회의"]
 
 
@@ -48,14 +48,14 @@ def test_explicit_date_source_is_marked_for_absolute_date():
     result = parse_event_text("2026년 8월 22일 부산 전시회")
 
     assert result.start_date == "2026-08-22"
-    assert result.date_source == "explicit"
+    assert result.date_source == "EXPLICIT"
 
 def test_explicit_date_range_sets_start_and_end_date():
     result = parse_event_text("8월 22일부터 8월 24일까지 부산 여행")
 
     assert result.start_date == "2026-08-22"
     assert result.end_date == "2026-08-24"
-    assert result.date_source == "explicit"
+    assert result.date_source == "EXPLICIT"
     assert result.to_embedding == ["부산", "여행"]
 
 
@@ -72,7 +72,7 @@ def test_relative_date_range_sets_start_and_end_date(monkeypatch):
 
     assert result.start_date == "2026-07-23"
     assert result.end_date == "2026-07-24"
-    assert result.date_source == "relative_expression"
+    assert result.date_source == "RELATIVE_EXPRESSION"
     assert result.to_embedding == ["워크숍"]
 
 
@@ -89,7 +89,7 @@ def test_weekday_date_range_sets_start_and_end_date(monkeypatch):
 
     assert result.start_date == "2026-07-24"
     assert result.end_date == "2026-07-26"
-    assert result.date_source == "relative_expression"
+    assert result.date_source == "RELATIVE_EXPRESSION"
     assert result.to_embedding == ["MT"]
 
 def test_dates_without_range_connector_do_not_set_end_date():
@@ -97,7 +97,7 @@ def test_dates_without_range_connector_do_not_set_end_date():
 
     assert result.start_date == "2026-08-22"
     assert result.end_date is None
-    assert result.date_source == "explicit"
+    assert result.date_source == "EXPLICIT"
     assert result.to_embedding == ["부산", "여행"]
 
 
@@ -114,7 +114,7 @@ def test_mixed_explicit_and_weekday_range_uses_relative_date_source(monkeypatch)
 
     assert result.start_date == "2026-07-23"
     assert result.end_date == "2026-07-24"
-    assert result.date_source == "relative_expression"
+    assert result.date_source == "RELATIVE_EXPRESSION"
     assert result.to_embedding == ["워크숍"]
 
 
@@ -123,7 +123,7 @@ def test_inverted_date_range_falls_back_to_first_date():
 
     assert result.start_date == "2026-08-24"
     assert result.end_date is None
-    assert result.date_source == "explicit"
+    assert result.date_source == "EXPLICIT"
     assert result.to_embedding == ["부산", "여행"]
 
 def test_month_day_slash_pattern_does_not_match_embedded_numeric_date():
@@ -222,9 +222,9 @@ def test_week_aliases_are_parsed_as_this_and_next_week():
     assert next_week.start_date == canonical_next_week.start_date
     assert spaced_next_week.start_date == canonical_next_week.start_date
     assert this_week.to_embedding == ["팀플", "회의"]
-    assert this_week.date_source == "relative_expression"
+    assert this_week.date_source == "RELATIVE_EXPRESSION"
     assert next_week.to_embedding == ["팀플", "회의"]
-    assert next_week.date_source == "relative_expression"
+    assert next_week.date_source == "RELATIVE_EXPRESSION"
 
 
 class FakeKiwiToken:
