@@ -27,7 +27,7 @@ class TemporalValidationService:
         return TemporalValidationResult(
             tempEventId=refinement_result.temp_event_id,
             draftRevision=refinement_result.draft_revision,
-            temporalStatus="no_items",
+            temporalStatus="NO_ITEMS",
             items=[],
             scheduleContext=refinement_result.schedule_context,
             errors=[]
@@ -75,6 +75,7 @@ class TemporalValidationService:
             sourceCode=item.source_code,
             displayText=item.display_text,
             itemType=item_type,
+            offsetDays=item.offset_days,
             displayDate=display_date,
             displayTime=None,
             actionType=item.action_type,
@@ -105,7 +106,7 @@ class TemporalValidationService:
         return TemporalValidationResult(
             tempEventId=refinement_result.temp_event_id,
             draftRevision=refinement_result.draft_revision,
-            temporalStatus="error",
+            temporalStatus="ERROR",
             items=fallback_items,
             scheduleContext=refinement_result.schedule_context,
             errors=[message],
@@ -150,7 +151,7 @@ class TemporalValidationService:
             return TemporalValidationResult(
                 tempEventId=refinement_result.temp_event_id,
                 draftRevision=refinement_result.draft_revision,
-                temporalStatus="success",
+                temporalStatus="SUCCESS",
                 items=temporal_items,
                 scheduleContext=refinement_result.schedule_context,
                 errors=[],

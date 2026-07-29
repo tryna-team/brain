@@ -13,6 +13,7 @@ from app.services.recommendation.candidate_search_service import CandidateSearch
 from app.services.recommendation.refinement_llm_service import RefinementLLMService
 from app.services.recommendation.refinement_service import RecommendationRefinementService
 from app.services.recommendation.temporal_validation_service import TemporalValidationService
+from app.services.recommendation.suggestion_compose_service import SuggestionCompositionService
 
 
 def get_neo4j_client() -> Neo4jClient:
@@ -81,17 +82,25 @@ def get_temporal_validation_service() -> TemporalValidationService:
 TemporalValidationServiceDep = Annotated[TemporalValidationService, Depends(get_temporal_validation_service)]
 
 
+def get_suggestion_compose_service() -> SuggestionCompositionService:
+    return SuggestionCompositionService()
+
+SuggestionCompositionServiceDep = Annotated[SuggestionCompositionService, Depends(get_suggestion_compose_service)]
+
+
 def get_recommendation_service(
     schedule_context_service: ScheduleContextServiceDep,
     candidate_search_service: CandidateSearchServiceDep,
     refinement_service: RecommendationRefinementServiceDep,
     temporal_validation_service: TemporalValidationServiceDep,
+    suggestion_compose_service: SuggestionCompositionServiceDep
 ) -> RecommendationService:
     return RecommendationService(
         schedule_context_service=schedule_context_service,
         candidate_search_service=candidate_search_service,
         refinement_service=refinement_service,
         temporal_validation_service=temporal_validation_service,
+        suggestion_compose_service=suggestion_compose_service
     )
 
 

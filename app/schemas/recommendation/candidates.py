@@ -3,8 +3,8 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.recommendation.schedule_context import ScheduleContext
 
-MappingStatus = Literal["matched", "unmatched", "error"]
-LookupStatus = Literal["success", "no_mapping", "no_candidates", "partial_error", "error"]
+MappingStatus = Literal["MATCHED", "UNMATCHED", "ERROR"]
+LookupStatus = Literal["SUCCESS", "NO_MAPPING", "NO_CANDIDATES", "PARTIAL_ERROR", "ERROR"]
 
 class MatchedBy(BaseModel):
     model_config = ConfigDict(populate_by_name=True)

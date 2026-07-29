@@ -75,8 +75,8 @@ class CandidateSearchService:
         return CandidateSearchResult(
             tempEventId=context.temp_event_id,
             draftRevision=context.draft_revision,
-            mappingStatus="error",
-            lookupStatus="error",
+            mappingStatus="ERROR",
+            lookupStatus="ERROR",
             recommendationCandidates=[],
             scheduleContext=context.schedule_context,
             errors=[message],
@@ -157,7 +157,7 @@ class CandidateSearchService:
     ) -> CandidateSearchResult:
         query_embedding = context.query_embedding
 
-        if context.embedding_status != "ready" or query_embedding is None:
+        if context.embedding_status != "READY" or query_embedding is None:
             return self._build_error_result(
                 context=context,
                 message="D101 query embedding is not ready.",
@@ -222,15 +222,15 @@ class CandidateSearchService:
         )
 
         mapping_status = (
-            "matched"
+            "MATCHED"
             if selected_event_type is not None or resolved_contexts
-            else "unmatched"
+            else "UNMATCHED"
         )
 
         recommendation_records = []
         errors = []
 
-        if mapping_status == "matched":
+        if mapping_status == "MATCHED":
             try:
                 relation_candidates = (
                     self.recommendation_repo.find_relation_candidates(
@@ -242,7 +242,7 @@ class CandidateSearchService:
             except RecommendationRepositoryError:
                 logger.exception("D102 관계 기반 추천 후보 조회 실패")
 
-                lookup_status = "error"
+                lookup_status = "ERROR"
                 errors.append(
                     "D102 relation candidate lookup failed."
                 )
@@ -264,7 +264,7 @@ class CandidateSearchService:
                     logger.exception("D102 추천 벡터 후보 조회 실패")
 
                     recommendation_records = relation_candidates
-                    lookup_status = "partial_error"
+                    lookup_status = "PARTIAL_ERROR"
                     errors.append(
                         "D102 recommendation vector lookup failed."
                     )
@@ -277,12 +277,12 @@ class CandidateSearchService:
                     )
 
                     lookup_status = (
-                        "success"
+                        "SUCCESS"
                         if recommendation_records
-                        else "no_candidates"
+                        else "NO_CANDIDATES"
                     )
         else:
-            lookup_status = "no_mapping"
+            lookup_status = "NO_MAPPING"
 
         return CandidateSearchResult(
             tempEventId=context.temp_event_id,

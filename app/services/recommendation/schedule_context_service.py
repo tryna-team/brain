@@ -101,7 +101,7 @@ class ScheduleContextService:
                 tempEventId=request.temp_event_id,
                 draftRevision=request.draft_revision,
                 queryEmbedding=None,
-                embeddingStatus="error",
+                embeddingStatus="ERROR",
                 semanticInputVersion="v1",
                 scheduleContext=schedule_context,
                 embeddingMeta=None,
@@ -111,12 +111,12 @@ class ScheduleContextService:
             tempEventId=request.temp_event_id,
             draftRevision=request.draft_revision,
             queryEmbedding=query_embedding,
-            embeddingStatus="ready",
+            embeddingStatus="READY",
             semanticInputVersion="v1",
             scheduleContext=schedule_context,
             embeddingMeta=EmbeddingMeta(
                 model=self.embedding_service.model,
-                profile="query",
+                profile="QUERY",
                 dimension=len(query_embedding),
             ),
         )

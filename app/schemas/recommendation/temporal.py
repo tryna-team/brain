@@ -7,9 +7,9 @@ from app.schemas.recommendation.schedule_context import ScheduleContext
 
 
 TemporalStatus = Literal[
-    "success",
-    "no_items",
-    "error",
+    "SUCCESS",
+    "NO_ITEMS",
+    "ERROR",
 ]
 
 ItemType = Literal[
@@ -24,6 +24,7 @@ class TemporalRecommendationItem(BaseModel):
     source_code: str = Field(alias="sourceCode", min_length=1)
     display_text: str = Field(alias="displayText", min_length=1)
     item_type: ItemType = Field(alias="itemType")
+    offset_days: int | None = Field(default=None, alias="offsetDays")
     display_date: date | None = Field(default=None, alias="displayDate")
     display_time: time | None = Field(default=None, alias="displayTime")
     action_type: str = Field(alias="actionType")
