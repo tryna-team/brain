@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +11,22 @@ class Settings(BaseSettings):
     # TODO_INFRA: 임시적 허용 범위 (추후 제거 예정)
     # ALB -> Nginx가 "/ai" 접두사를 떼어내고 FastAPI로 넘기므로, Swagger/OpenAPI가
     # 외부에 노출된 실제 경로를 알 수 있도록 root_path로 되돌려준다. (prod에서만 "/ai")
+    # ROOT_PATH 환경변수로 명시하면 APP_ENV 기본값보다 우선한다.
     root_path: str = ""
+
+    @property
+    def is_prod(self) -> bool:
+        return self.app_env == "prod"
+
+    @property
+    def is_local(self) -> bool:
+        return self.app_env == "local"
+
+    @model_validator(mode="after")
+    def apply_env_defaults(self) -> "Settings":
+        if self.is_prod and not self.root_path:
+            self.root_path = "/ai"
+        return self
 
     neo4j_uri: str | None = None
     neo4j_username: str | None = None
