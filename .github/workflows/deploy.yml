@@ -102,6 +102,27 @@ jobs:
             --query taskDefinition \
             > task-definition.json
 
+      - name: Validate APP_ENV secret
+        id: app-env
+        env:
+          APP_ENV: ${{ secrets.APP_ENV }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_ENV}" ]; then
+            echo "::error::APP_ENV secret is empty. Set GitHub secret APP_ENV to 'prod' for production deployment."
+            exit 1
+          fi
+          case "${APP_ENV}" in
+            prod)
+              echo "APP_ENV validated: prod"
+              ;;
+            *)
+              echo "::error::Unsupported APP_ENV value: '${APP_ENV}'. Production deployment requires APP_ENV=prod."
+              exit 1
+              ;;
+          esac
+          echo "value=${APP_ENV}" >> "$GITHUB_OUTPUT"
+
       # 새 이미지 + 환경변수로 Task Definition 갱신 (FastAPI 컨테이너)
       - name: Render new task definition (FastAPI container)
         id: task-def
@@ -111,8 +132,7 @@ jobs:
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.build-image.outputs.image }}
           environment-variables: |
-            APP_ENV=prod
-            ROOT_PATH=/ai
+            APP_ENV=${{ steps.app-env.outputs.value }}
             NEO4J_URI=${{ secrets.NEO4J_URI }}
             NEO4J_USERNAME=${{ secrets.NEO4J_USERNAME }}
             NEO4J_PASSWORD=${{ secrets.NEO4J_PASSWORD }}

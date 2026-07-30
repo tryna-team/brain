@@ -39,10 +39,7 @@ def get_recommendations(
     | TemporalValidationResult
     | RecommendationResponse
 ):
-    if (
-        settings.app_env == "prod"
-        and stop_after_step is not None
-    ):
+    if settings.is_prod and stop_after_step is not None:
         raise BusinessException(
             ErrorCode.COMMON_403,
             "운영 환경에서는 중간 결과를 조회할 수 없습니다.",
