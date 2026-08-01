@@ -54,4 +54,5 @@ class CandidateSearchResult(BaseModel):
     lookup_status: LookupStatus = Field(alias= "lookupStatus")
     recommendation_candidates: list[RecommendationCandidate] = Field(default_factory=list, alias= "recommendationCandidates")
     schedule_context: ScheduleContext = Field(alias= "scheduleContext")
+    error_code: str | None = Field(default=None, alias="errorCode")
     errors: list[str] = Field(default_factory=list)

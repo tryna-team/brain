@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import replace
 
 from neo4j import Driver, Record
@@ -19,25 +20,115 @@ class RecommendationRepo:
 
     def _to_semantic_candidate(
         self,
-        record,
+        record: Record,
     ) -> SemanticCandidateRecord:
         code = record.get("code")
-        score = record.get("score")
 
         if not isinstance(code, str) or not code:
             raise RecommendationRepositoryError(
                 "Neo4j semantic candidate has an invalid code."
             )
 
-        if not isinstance(score, (int, float)):
-            raise RecommendationRepositoryError(
-                "Neo4j semantic candidate has an invalid score."
-            )
+        normalized_score = self._require_finite_float(
+            record,
+            "score",
+        )
 
         return SemanticCandidateRecord(
             code=code,
-            score=float(score),
+            score=normalized_score,
         )
+
+    def _require_string(
+        self,
+        record: Record,
+        field_name: str,
+    ) -> str:
+        value = record.get(field_name)
+
+        if not isinstance(value, str) or not value.strip():
+            raise RecommendationRepositoryError(
+                "Neo4j recommendation candidate has an invalid "
+                f"{field_name}."
+            )
+
+        return value.strip()
+
+
+    def _require_string_list(
+        self,
+        record: Record,
+        field_name: str,
+    ) -> list[str]:
+        value = record.get(field_name)
+
+        if (
+            not isinstance(value, list)
+            or not value
+            or any(
+                not isinstance(item, str) or not item.strip()
+                for item in value
+            )
+        ):
+            raise RecommendationRepositoryError(
+                "Neo4j recommendation candidate has an invalid "
+                f"{field_name}."
+            )
+
+        return [item.strip() for item in value]
+
+
+    def _optional_int(
+        self,
+        record: Record,
+        field_name: str,
+    ) -> int | None:
+        value = record.get(field_name)
+
+        if value is None:
+            return None
+
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise RecommendationRepositoryError(
+                "Neo4j recommendation candidate has an invalid "
+                f"{field_name}."
+            )
+
+        return value
+
+
+    def _require_finite_float(
+        self,
+        record: Record,
+        field_name: str,
+    ) -> float:
+        value = record.get(field_name)
+
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+        ):
+            raise RecommendationRepositoryError(
+                "Neo4j recommendation candidate has an invalid "
+                f"{field_name}."
+            )
+
+        try:
+            normalized = float(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise RecommendationRepositoryError(
+                "Neo4j recommendation candidate has an invalid "
+                f"{field_name}."
+            ) from exc
+
+        if not math.isfinite(normalized):
+            raise RecommendationRepositoryError(
+                "Neo4j recommendation candidate has an invalid "
+                f"{field_name}."
+            )
+
+        return normalized
+
 
     # 이벤트 타입, 맥락, 장소 후보 조회 공통 메서드
     def _find_semantic_candidates(
@@ -272,17 +363,68 @@ class RecommendationRepo:
         ] = {}
 
         for record in records:
-            code = record["code"]
-            default_rank = record["defaultRank"]
+            code = self._require_string(record, "code")
+            name = self._require_string(record, "name")
+            action_type = self._require_string(record, "actionType")
+            target_type = self._require_string(record, "targetType")
+            suggestion_level = self._require_string(
+                record,
+                "suggestionLevel",
+            )
+            default_timing = self._require_string(
+                record,
+                "defaultTiming",
+            )
+            source_code = self._require_string(
+                record,
+                "sourceCode",
+            )
+            source_labels = self._require_string_list(
+                record,
+                "sourceLabels",
+            )
+            default_rank = self._optional_int(
+                record,
+                "defaultRank",
+            )
+
+            offset_days = self._optional_int(
+                record,
+                "offsetDays",
+            )
+            conditional_text = self._require_string(
+                record,
+                "conditionalText",
+            )
+            description = self._require_string(
+                record,
+                "description",
+            )
+            reason = self._require_string(
+                record,
+                "reason",
+            )
+
+            raw_suggestion_mode = record.get("suggestionMode")
+
+            if raw_suggestion_mode is None:
+                suggestion_mode = suggestion_level
+            elif (
+                not isinstance(raw_suggestion_mode, str)
+                or not raw_suggestion_mode.strip()
+            ):
+                raise RecommendationRepositoryError(
+                    "Neo4j recommendation candidate has an invalid "
+                    "suggestionMode."
+                )
+            else:
+                suggestion_mode = raw_suggestion_mode.strip()
 
             matched_by = MatchedByRecord(
-                source_labels=list(record["sourceLabels"]),
-                source_code=record["sourceCode"],
-                suggestion_mode=(
-                    record["suggestionMode"]
-                    or record["suggestionLevel"]
-                ),
-                reason=record["reason"],
+                source_labels=source_labels,
+                source_code=source_code,
+                suggestion_mode=suggestion_mode,
+                reason=reason,
             )
 
             existing_candidate = candidates_by_code.get(code)
@@ -290,14 +432,14 @@ class RecommendationRepo:
             if existing_candidate is None:
                 candidates_by_code[code] = RecommendationCandidateRecord(
                     code=code,
-                    name=record["name"],
-                    conditional_text=record["conditionalText"],
-                    description=record["description"],
-                    action_type=record["actionType"],
-                    target_type=record["targetType"],
-                    suggestion_level=record["suggestionLevel"],
-                    default_timing=record["defaultTiming"],
-                    offset_days=record["offsetDays"],
+                    name=name,
+                    conditional_text=conditional_text,
+                    description=description,
+                    action_type=action_type,
+                    target_type=target_type,
+                    suggestion_level=suggestion_level,
+                    default_timing=default_timing,
+                    offset_days=offset_days,
                     default_rank=default_rank,
                     vector_score=None,
                     matched_by=[matched_by],
@@ -457,17 +599,68 @@ class RecommendationRepo:
         ] = {}
 
         for record in records:
-            code = record["code"]
-            vector_score = float(record["vectorScore"])
+            code = self._require_string(record, "code")
+            vector_score = self._require_finite_float(
+                record,
+                "vectorScore",
+            )
+
+            name = self._require_string(record, "name")
+            action_type = self._require_string(record, "actionType")
+            target_type = self._require_string(record, "targetType")
+            suggestion_level = self._require_string(
+                record,
+                "suggestionLevel",
+            )
+            default_timing = self._require_string(
+                record,
+                "defaultTiming",
+            )
+            source_code = self._require_string(
+                record,
+                "sourceCode",
+            )
+            source_labels = self._require_string_list(
+                record,
+                "sourceLabels",
+            )
+            offset_days = self._optional_int(
+                record,
+                "offsetDays",
+            )
+            conditional_text = self._require_string(
+                record,
+                "conditionalText",
+            )
+            description = self._require_string(
+                record,
+                "description",
+            )
+            reason = self._require_string(
+                record,
+                "reason",
+            )
+
+            raw_suggestion_mode = record.get("suggestionMode")
+
+            if raw_suggestion_mode is None:
+                suggestion_mode = suggestion_level
+            elif (
+                not isinstance(raw_suggestion_mode, str)
+                or not raw_suggestion_mode.strip()
+            ):
+                raise RecommendationRepositoryError(
+                    "Neo4j recommendation candidate has an invalid "
+                    "suggestionMode."
+                )
+            else:
+                suggestion_mode = raw_suggestion_mode.strip()
 
             matched_by = MatchedByRecord(
-                source_labels=list(record["sourceLabels"]),
-                source_code=record["sourceCode"],
-                suggestion_mode=(
-                    record["suggestionMode"]
-                    or record["suggestionLevel"]
-                ),
-                reason=record["reason"],
+                source_labels=source_labels,
+                source_code=source_code,
+                suggestion_mode=suggestion_mode,
+                reason=reason,
             )
 
             existing_candidate = candidates_by_code.get(code)
@@ -475,14 +668,14 @@ class RecommendationRepo:
             if existing_candidate is None:
                 candidates_by_code[code] = RecommendationCandidateRecord(
                     code=code,
-                    name=record["name"],
-                    conditional_text=record["conditionalText"],
-                    description=record["description"],
-                    action_type=record["actionType"],
-                    target_type=record["targetType"],
-                    suggestion_level=record["suggestionLevel"],
-                    default_timing=record["defaultTiming"],
-                    offset_days=record["offsetDays"],
+                    name=name,
+                    conditional_text=conditional_text,
+                    description=description,
+                    action_type=action_type,
+                    target_type=target_type,
+                    suggestion_level=suggestion_level,
+                    default_timing=default_timing,
+                    offset_days=offset_days,
                     default_rank=None,
                     vector_score=vector_score,
                     matched_by=[matched_by],
@@ -510,4 +703,3 @@ class RecommendationRepo:
         )
 
         return candidates[:limit]
-

@@ -45,3 +45,5 @@ class ScheduleContextResult(BaseModel):
     semantic_input_version: str = Field(default="v1", alias="semanticInputVersion")
     schedule_context: ScheduleContext = Field(alias="scheduleContext")
     embedding_meta: EmbeddingMeta | None = Field(default=None, alias="embeddingMeta")
+    error_code: str | None = Field(default=None, alias="errorCode")
+    errors: list[str] = Field(default_factory=list)

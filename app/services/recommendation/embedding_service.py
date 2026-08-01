@@ -1,5 +1,6 @@
 # D101 임베딩 모델을 통한 일정 맥락 구조화
 
+import math
 import requests
 
 from app.core.config import settings
@@ -23,17 +24,24 @@ class EmbeddingService:
         if not isinstance(embedding, list) or not embedding:
             raise BusinessException(ErrorCode.EMBEDDING_503)
 
-        if any(
-            isinstance(value, bool)
-            or not isinstance(value, (int, float))
-            for value in embedding
+        try:
+            normalized = [
+                float(value)
+                for value in embedding
+                if not isinstance(value, bool)
+            ]
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise BusinessException(ErrorCode.EMBEDDING_503) from exc
+
+        if (
+            len(normalized) != len(embedding)
+            or any(not math.isfinite(value) for value in normalized)
+            or len(normalized) != settings.d102_embedding_dimension
         ):
             raise BusinessException(ErrorCode.EMBEDDING_503)
 
-        if len(embedding) != settings.d102_embedding_dimension:
-            raise BusinessException(ErrorCode.EMBEDDING_503)
+        return normalized
 
-        return [float(value) for value in embedding]
         
     def embed(self, text: str) -> list[float]:
         return self.embed_query(text)
@@ -94,7 +102,7 @@ class EmbeddingService:
                 "model": model,
                 "input": text,
             },
-            timeout=10,
+            timeout=settings.upstage_embedding_timeout_seconds,
         )
         response.raise_for_status()
 
