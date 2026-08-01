@@ -20,35 +20,19 @@ class RecommendationRepo:
 
     def _to_semantic_candidate(
         self,
-        record,
+        record: Record,
     ) -> SemanticCandidateRecord:
         code = record.get("code")
-        score = record.get("score")
 
         if not isinstance(code, str) or not code:
             raise RecommendationRepositoryError(
                 "Neo4j semantic candidate has an invalid code."
             )
 
-        if (
-            isinstance(score, bool)
-            or not isinstance(score, (int, float))
-        ):
-            raise RecommendationRepositoryError(
-                "Neo4j semantic candidate has an invalid score."
-            )
-
-        try:
-            normalized_score = float(score)
-        except (TypeError, ValueError, OverflowError) as exc:
-            raise RecommendationRepositoryError(
-                "Neo4j semantic candidate has an invalid score."
-            ) from exc
-
-        if not math.isfinite(normalized_score):
-            raise RecommendationRepositoryError(
-                "Neo4j semantic candidate has an invalid score."
-            )
+        normalized_score = self._require_finite_float(
+            record,
+            "score",
+        )
 
         return SemanticCandidateRecord(
             code=code,
