@@ -2,11 +2,12 @@ from datetime import date, time
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 
-from app.schemas.types import SourceType, DateSource
+from app.schemas.types import DateSource
 from app.schemas.recommendation.temporal import ItemType
 
 
 SuggestionStatus = Literal["READY", "EMPTY", "ERROR"]
+SourceType = Literal["USER_NATURAL_LANGUAGE", "USER_MANUAL_EDIT"]
 
 # /api/v1/recommendations requestDTO
 class RecommendationRequest(BaseModel):
