@@ -2,6 +2,7 @@ import logging
 from pydantic import ValidationError
 from app.schemas.recommendation.candidates import CandidateSearchResult
 from app.schemas.recommendation.recommendation import RecommendationRequest
+from app.core.error_code import ErrorCode
 from app.services.recommendation.prompts.refinement_prompt import (
     FEW_SHOT_VERSION,
     PROMPT_VERSION,
@@ -45,7 +46,7 @@ class RecommendationRefinementService:
             },
             refinedItems=[],
             scheduleContext=candidate_result.schedule_context,
-            errors=[]
+            errors=list(candidate_result.errors)
         )
     
     # Upstage 반환 문자열 파싱
@@ -68,7 +69,7 @@ class RecommendationRefinementService:
         }
 
         refined_items: list[RefinedRecommendationItem] = []
-        errors: list[str] = []
+        errors: list[str] = list(candidate_result.errors)
         selected_codes: set[str] = set()
 
         if len(llm_response.refined_items) > 3:
@@ -110,6 +111,20 @@ class RecommendationRefinementService:
                 )
             )
 
+        if llm_response.refined_items and not refined_items:
+            logger.warning(
+                "D103 returned no usable refined items: "
+                "tempEventId=%s",
+                request.temp_event_id,
+            )
+
+            return self._build_fallback_result(
+                request=request,
+                candidate_result=candidate_result,
+                message="D103 Upstage returned no usable items.",
+            )
+
+
         return RecommendationRefinementResult(
             tempEventId=request.temp_event_id,
             draftRevision=request.draft_revision,
@@ -137,6 +152,14 @@ class RecommendationRefinementService:
             for candidate in candidate_result.recommendation_candidates
             if candidate.suggestion_level == "safe"
         ][:3]
+
+        if not safe_candidates:
+            return self._build_error_result(
+                request=request,
+                candidate_result=candidate_result,
+                error_code=ErrorCode.LLM_503,
+                message=ErrorCode.LLM_503.message,
+            )
 
         refined_items = [
             RefinedRecommendationItem(
@@ -167,13 +190,17 @@ class RecommendationRefinementService:
             },
             refinedItems=refined_items,
             scheduleContext=candidate_result.schedule_context,
-            errors=[message],
+            errors=[
+                *candidate_result.errors,
+                message,
+            ],
         )
     
     def _build_error_result(
         self,
         request: RecommendationRequest,
         candidate_result: CandidateSearchResult,
+        error_code: ErrorCode,
         message: str,
     ) -> RecommendationRefinementResult:
         return RecommendationRefinementResult(
@@ -188,7 +215,11 @@ class RecommendationRefinementService:
             },
             refinedItems=[],
             scheduleContext=candidate_result.schedule_context,
-            errors=[message],
+            errorCode=error_code.name,
+            errors=[
+                *candidate_result.errors,
+                message,
+            ],
         )
 
     # D103 Upstage를 통한 추천 항목 정제 핵심 메서드
@@ -204,17 +235,13 @@ class RecommendationRefinementService:
             or request.draft_revision
             != candidate_result.draft_revision
         ):
-            return self._build_error_result(
-                request=request,
-                candidate_result=candidate_result,
-                message="Stale or mismatched D102 result.",
+            raise ValueError(
+                "D103 received a stale or mismatched D102 result."
             )
         
         if candidate_result.lookup_status == "ERROR":
-            return self._build_error_result(
-                request=request,
-                candidate_result=candidate_result,
-                message="D102 candidate lookup failed.",
+            raise ValueError(
+                "D103 requires a usable D102 candidate result."
             )
         
         if (
@@ -236,7 +263,10 @@ class RecommendationRefinementService:
             content = self.llm_service.complete(messages)
             llm_response = self._parse_llm_response(content)
         except RefinementLLMError:
-            logger.exception("D103 Upstage 호출 실패")
+            logger.exception(
+                "D103 Upstage request failed: tempEventId=%s",
+                request.temp_event_id,
+            )
 
             return self._build_fallback_result(
                 request=request,
@@ -244,7 +274,11 @@ class RecommendationRefinementService:
                 message="D103 Upstage refinement failed.",
             )
         except ValidationError:
-            logger.exception("D103 Upstage JSON 응답 검증 실패")
+            logger.exception(
+                "D103 Upstage response validation failed: "
+                "tempEventId=%s",
+                request.temp_event_id,
+            )
 
             return self._build_fallback_result(
                 request=request,

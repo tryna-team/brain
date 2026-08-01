@@ -10,7 +10,7 @@ SuggestionStatus = Literal["READY", "EMPTY", "ERROR"]
 
 # /api/v1/recommendations requestDTO
 class RecommendationRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, str_strip_whitespace=True)
 
     temp_event_id: str = Field(alias= "tempEventId")
     draft_revision: int = Field(alias= "draftRevision")
@@ -52,4 +52,5 @@ class RecommendationResponse(BaseModel):
     draft_revision: int = Field(alias="draftRevision")
     suggestion_status: SuggestionStatus = Field(alias="suggestionStatus")
     suggestions: list[SuggestionItem] = Field(default_factory=list, max_length=3)
+    error_code: str | None = Field(default=None, alias="errorCode")
     errors: list[str] = Field(default_factory=list)

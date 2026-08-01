@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -6,6 +8,7 @@ from app.core.error_code import ErrorCode
 from app.core.exceptions import BusinessException
 from app.core.responses import ApiResponse
 
+logger = logging.getLogger(__name__)
 
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(BusinessException)
@@ -40,6 +43,13 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request,
         exc: Exception,
     ) -> JSONResponse:
+        logger.error(
+            "Unhandled server error: method=%s, path=%s",
+            request.method,
+            request.url.path,
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
+
         return JSONResponse(
             status_code=ErrorCode.COMMON_500.status.value,
             content=ApiResponse.error(
