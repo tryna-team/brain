@@ -4,7 +4,7 @@ from app.schemas.recommendation.candidates import CandidateSearchResult
 
 
 PROMPT_VERSION = "d103_prompt_v1"
-FEW_SHOT_VERSION = "d103_fewshot_v1"
+FEW_SHOT_VERSION = "d103_fewshot_v2"
 
 SYSTEM_PROMPT = """
 당신은 일정 추천 후보 정제기다.
@@ -135,6 +135,130 @@ FEW_SHOT_MESSAGES = [
       "displayText": "마이크 상태 확인하기"
     }
   ]
+}
+""".strip(),
+    },
+    {
+        "role": "user",
+        "content": """
+{
+  "eventTitle": "다음 주 중간고사",
+  "selectedEventType": "exam",
+  "resolvedContexts": ["academic"],
+  "selectedPlaceType": "school",
+  "recommendationCandidates": [
+    {
+      "code": "check_exam_schedule",
+      "name": "시험 시간과 시험실 확인하기",
+      "suggestionLevel": "safe"
+    },
+    {
+      "code": "check_exam_scope",
+      "name": "시험 범위 확인하기",
+      "suggestionLevel": "safe"
+    },
+    {
+      "code": "check_weather",
+      "name": "여행지 날씨 확인하기",
+      "conditionalText": "짐을 싸기 전에 여행지 날씨를 확인할까요?",
+      "suggestionLevel": "safe"
+    }
+  ]
+}
+""".strip(),
+    },
+    {
+        "role": "assistant",
+        "content": """
+{
+  "refinedItems": [
+    {
+      "sourceCode": "check_exam_schedule",
+      "displayText": "시험 시간과 시험실 확인하기"
+    },
+    {
+      "sourceCode": "check_exam_scope",
+      "displayText": "시험 범위 확인하기"
+    }
+  ]
+}
+""".strip(),
+    },
+    {
+        "role": "user",
+        "content": """
+{
+  "eventTitle": "토요일 하루 종일 한강 피크닉",
+  "selectedEventType": "social_meetup",
+  "resolvedContexts": ["hangout"],
+  "selectedPlaceType": "park_outdoor",
+  "recommendationCandidates": [
+    {
+      "code": "check_outdoor_weather",
+      "name": "야외 약속 시간대 날씨 확인하기",
+      "conditionalText": "야외에서 만날 예정이라면 그 시간대 날씨를 확인할까요?",
+      "suggestionLevel": "contextual"
+    },
+    {
+      "code": "check_location",
+      "name": "정확한 장소 다시 확인하기",
+      "conditionalText": "정확한 건물과 방문 장소를 다시 확인할까요?",
+      "suggestionLevel": "safe"
+    },
+    {
+      "code": "pack_water",
+      "name": "마실 물 챙기기",
+      "conditionalText": "오래 밖에 있을 예정이라면 마실 물을 챙길까요?",
+      "suggestionLevel": "conditional"
+    }
+  ]
+}
+""".strip(),
+    },
+    {
+        "role": "assistant",
+        "content": """
+{
+  "refinedItems": [
+    {
+      "sourceCode": "check_location",
+      "displayText": "만날 장소 확인하기"
+    },
+    {
+      "sourceCode": "check_outdoor_weather",
+      "displayText": "야외 약속 시간대 날씨 확인하기"
+    },
+    {
+      "sourceCode": "pack_water",
+      "displayText": "마실 물 챙기기"
+    }
+  ]
+}
+""".strip(),
+    },
+    {
+        "role": "user",
+        "content": """
+{
+  "eventTitle": "집에서 책 읽기",
+  "selectedEventType": null,
+  "resolvedContexts": [],
+  "selectedPlaceType": null,
+  "recommendationCandidates": [
+    {
+      "code": "pack_passport",
+      "name": "여권 챙기기",
+      "suggestionLevel": "safe"
+    }
+  ]
+}
+""".strip(),
+    },
+    {
+        "role": "assistant",
+        "content": """
+{
+  "refinedItems": []
 }
 """.strip(),
     },
