@@ -213,6 +213,13 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 )
             )
 
+    _add_relative_week_candidates_without_weekday(
+        source_text=source_text,
+        today=today,
+        candidates=candidates,
+        removable_texts=removable_texts,
+    )
+
     for weekday_text, weekday in WEEKDAY_INDEX.items():
         for relative_week_text, week_offset in (
             (f"이번 {weekday_text}", 0),
@@ -309,6 +316,48 @@ def _extract_date(source_text: str) -> ExtractedValue:
         )
 
     return ExtractedValue(value=None)
+
+
+def _add_relative_week_candidates_without_weekday(
+    source_text: str,
+    today: date,
+    candidates: list[tuple[int, int, ExtractedValue]],
+    removable_texts: list[str],
+) -> None:
+    """요일 없이 주차만 입력된 표현은 서비스 기준 오늘과 같은 요일로 날짜를 계산합니다."""
+    for pattern, week_offset in (
+        (r"다다음\s*주", 2),
+        (r"(?:다음|담)\s*주", 1),
+        (r"(?:이번|요번)\s*주", 0),
+    ):
+        for match in re.finditer(pattern, source_text):
+            if _is_followed_by_weekday(source_text[match.end():]):
+                continue
+
+            parsed_date = _this_weekday(
+                today + timedelta(days=7 * week_offset),
+                today.weekday(),
+            )
+            removable_text = match.group(0)
+            removable_texts.append(removable_text)
+            candidates.append(
+                (
+                    match.start(),
+                    match.end(),
+                    ExtractedValue(
+                        value=parsed_date.isoformat(),
+                        text=removable_text,
+                        date_source="RELATIVE_EXPRESSION",
+                        is_past=parsed_date < today,
+                    ),
+                )
+            )
+
+
+def _is_followed_by_weekday(text_after_match: str) -> bool:
+    """주차 표현 뒤에 요일이 바로 이어지면 기존 요일 포함 파싱 로직에 맡깁니다."""
+    stripped_text = text_after_match.lstrip()
+    return any(stripped_text.startswith(weekday_text) for weekday_text in WEEKDAY_INDEX)
 
 
 def _extract_date_range(
