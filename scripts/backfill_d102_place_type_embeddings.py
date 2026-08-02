@@ -59,31 +59,43 @@ def _database_kwargs() -> dict[str, str]:
 
 
 def _load_targets() -> list[dict]:
-    records, _, _ = neo4j_client.driver.execute_query(
+    skipped_records, _, _ = neo4j_client.driver.execute_query(
         """
         MATCH (node:PlaceType)
         WHERE node.isActive = true
           AND node.embedding IS NULL
-        RETURN
-            node.code AS code,
-            node.embeddingText AS embeddingText,
-            node.isActive AS isActive
+          AND (
+              node.embeddingText IS NULL
+              OR trim(node.embeddingText) = ''
+          )
+        RETURN node.code AS code
         ORDER BY node.code
         """,
         **_database_kwargs(),
     )
 
-    targets = [dict(record) for record in records]
+    for record in skipped_records:
+        print(
+            f"skipped: PlaceType/{record['code']}, "
+            "reason=empty embeddingText"
+        )
 
-    for target in targets:
-        code = target["code"]
+    records, _, _ = neo4j_client.driver.execute_query(
+        """
+        MATCH (node:PlaceType)
+        WHERE node.isActive = true
+          AND node.embedding IS NULL
+          AND node.embeddingText IS NOT NULL
+          AND trim(node.embeddingText) <> ''
+        RETURN
+            node.code AS code,
+            node.embeddingText AS embeddingText
+        ORDER BY node.code
+        """,
+        **_database_kwargs(),
+    )
 
-        if target["isActive"] is not True:
-            raise RuntimeError(f"비활성 PlaceType입니다: {code}")
-        if not target["embeddingText"]:
-            raise RuntimeError(f"embeddingText가 없습니다: {code}")
-
-    return targets
+    return [dict(record) for record in records]
 
 
 def _batches(items: list[dict], batch_size: int):

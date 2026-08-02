@@ -68,15 +68,37 @@ def _database_kwargs() -> dict[str, str]:
 
 
 def _load_targets(limit: int) -> list[dict]:
+    skipped_records, _, _ = neo4j_client.driver.execute_query(
+        """
+        MATCH (node:RecommendationTemplate)
+        WHERE node.isActive = true
+          AND node.embedding IS NULL
+          AND (
+              node.embeddingText IS NULL
+              OR trim(node.embeddingText) = ''
+          )
+        RETURN node.code AS code
+        ORDER BY node.code
+        """,
+        **_database_kwargs(),
+    )
+
+    for record in skipped_records:
+        print(
+            f"skipped: RecommendationTemplate/{record['code']}, "
+            "reason=empty embeddingText"
+        )
+
     records, _, _ = neo4j_client.driver.execute_query(
         """
         MATCH (node:RecommendationTemplate)
         WHERE node.isActive = true
           AND node.embedding IS NULL
+          AND node.embeddingText IS NOT NULL
+          AND trim(node.embeddingText) <> ''
         RETURN
             node.code AS code,
-            node.embeddingText AS embeddingText,
-            node.isActive AS isActive
+            node.embeddingText AS embeddingText
         ORDER BY node.code
         LIMIT $limit
         """,
@@ -84,19 +106,7 @@ def _load_targets(limit: int) -> list[dict]:
         **_database_kwargs(),
     )
 
-    targets = [dict(record) for record in records]
-
-    for target in targets:
-        code = target["code"]
-
-        if target["isActive"] is not True:
-            raise RuntimeError(
-                f"비활성 RecommendationTemplate입니다: {code}"
-        )
-        if not target["embeddingText"]:
-            raise RuntimeError(f"embeddingText가 없습니다: {code}")
-
-    return targets
+    return [dict(record) for record in records]
 
 
 def _batches(items: list[dict], batch_size: int):
