@@ -14,15 +14,16 @@ from app.services.recommendation.embedding_service import EmbeddingService
 
 
 TARGET_CONTEXT_CODES = (
-    "travel",
-    "domestic_travel",
-    "international_travel",
+    "academic",
+    "hangout",
+    "team_project",
+    "work_career",
 )
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="D102 여행 Context 노드의 passage embedding을 저장합니다.",
+        description="Context 노드의 passage embedding을 저장합니다.",
     )
     parser.add_argument(
         "--apply",
