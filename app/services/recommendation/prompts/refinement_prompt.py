@@ -222,7 +222,7 @@ FEW_SHOT_MESSAGES = [
   "refinedItems": [
     {
       "sourceCode": "check_location",
-      "displayText": "만날 장소 확인하기"
+      "displayText": "정확한 장소 다시 확인하기"
     },
     {
       "sourceCode": "check_outdoor_weather",
