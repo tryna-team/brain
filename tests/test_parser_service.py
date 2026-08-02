@@ -237,16 +237,24 @@ def test_relative_week_without_weekday_uses_current_weekday(monkeypatch):
     )
 
     this_week = parser_service.parse_event_text("이번주 회의")
+    this_week_alias = parser_service.parse_event_text("요번주 회의")
     next_week = parser_service.parse_event_text("다음주 회의")
     next_week_alias = parser_service.parse_event_text("담 주 회의")
     week_after_next = parser_service.parse_event_text("다다음주 회의")
+    explicit_weekday = parser_service.parse_event_text("다음주 금요일 회의")
+    weekend = parser_service.parse_event_text("다음주말 회의")
 
     assert this_week.start_date == "2026-07-21"
+    assert this_week_alias.start_date == "2026-07-21"
     assert next_week.start_date == "2026-07-28"
     assert next_week_alias.start_date == "2026-07-28"
     assert week_after_next.start_date == "2026-08-04"
+    assert explicit_weekday.start_date == "2026-07-31"
+    assert weekend.start_date is None
     assert next_week.date_source == "RELATIVE_EXPRESSION"
     assert next_week.to_embedding == ["회의"]
+    assert explicit_weekday.date_source == "RELATIVE_EXPRESSION"
+    assert explicit_weekday.to_embedding == ["회의"]
 
 
 class FakeKiwiToken:

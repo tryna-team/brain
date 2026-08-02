@@ -331,7 +331,7 @@ def _add_relative_week_candidates_without_weekday(
         (r"(?:이번|요번)\s*주", 0),
     ):
         for match in re.finditer(pattern, source_text):
-            if _is_followed_by_weekday(source_text[match.end():]):
+            if _is_followed_by_weekday_or_weekend(source_text[match.end():]):
                 continue
 
             parsed_date = _this_weekday(
@@ -354,10 +354,12 @@ def _add_relative_week_candidates_without_weekday(
             )
 
 
-def _is_followed_by_weekday(text_after_match: str) -> bool:
-    """주차 표현 뒤에 요일이 바로 이어지면 기존 요일 포함 파싱 로직에 맡깁니다."""
+def _is_followed_by_weekday_or_weekend(text_after_match: str) -> bool:
+    """주차 표현 뒤에 요일/주말이 바로 이어지면 더 구체적인 파싱 로직에 맡깁니다."""
     stripped_text = text_after_match.lstrip()
-    return any(stripped_text.startswith(weekday_text) for weekday_text in WEEKDAY_INDEX)
+    return stripped_text.startswith("말") or any(
+        stripped_text.startswith(weekday_text) for weekday_text in WEEKDAY_INDEX
+    )
 
 
 def _extract_date_range(
