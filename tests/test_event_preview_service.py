@@ -38,6 +38,33 @@ def test_preview_event_defaults_missing_date_to_today():
     assert all(warning.code != "DATE_MISSING" for warning in result.warnings)
 
 
+def test_preview_event_uses_selected_date_when_source_has_no_date():
+    result = preview_event(
+        EventPreviewRequest(
+            eventTitle="팀플 회의",
+            selectedDate="2026-08-10",
+        )
+    )
+    payload = result.model_dump(by_alias=True)
+
+    assert result.start_date == "2026-08-10"
+    assert result.date_source == "SELECTED_DATE"
+    assert payload["startDate"] == "2026-08-10"
+    assert payload["dateSource"] == "SELECTED_DATE"
+
+
+def test_preview_event_source_date_has_priority_over_selected_date():
+    result = preview_event(
+        EventPreviewRequest(
+            eventTitle="2026년 8월 22일 부산 전시회",
+            selectedDate="2026-08-10",
+        )
+    )
+
+    assert result.start_date == "2026-08-22"
+    assert result.date_source == "EXPLICIT"
+
+
 
 def test_preview_event_returns_explicit_date_source_for_absolute_date():
     result = preview_event(EventPreviewRequest(eventTitle="2026년 8월 22일 부산 전시회"))

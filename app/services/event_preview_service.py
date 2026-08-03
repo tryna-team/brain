@@ -23,8 +23,9 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
 
     parsed_event = parse_event_text(event_title)
     warnings = _build_warnings(parsed_event)
-    start_date = parsed_event.start_date or datetime.now(ASIA_SEOUL).date().isoformat()
-    date_source = parsed_event.date_source or "DEFAULT_TODAY"
+    selected_date = request.selected_date.isoformat() if request.selected_date else None
+    start_date = parsed_event.start_date or selected_date or datetime.now(ASIA_SEOUL).date().isoformat()
+    date_source = parsed_event.date_source or ("SELECTED_DATE" if selected_date else "DEFAULT_TODAY")
     start_time = _format_time_with_seconds(parsed_event.start_time)
 
     return EventPreviewResponse(
