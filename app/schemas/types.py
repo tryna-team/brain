@@ -4,6 +4,7 @@ from typing import Literal, get_args
 DateSource = Literal[
     "EXPLICIT",
     "RELATIVE_EXPRESSION",
+    "SELECTED_DATE",
     "DEFAULT_TODAY",
 ]
 

@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.types import DateSource
@@ -7,6 +9,7 @@ class EventPreviewRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     event_title: str = Field(alias="eventTitle")
+    selected_date: date | None = Field(default=None, alias="selectedDate")
 
 
 class EventPreviewWarning(BaseModel):
