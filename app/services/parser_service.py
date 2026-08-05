@@ -433,6 +433,12 @@ def _extract_time(source_text: str) -> ExtractedTime:
             end_match = _find_range_end_match(source_text, start_match, matches[1:])
             if end_match:
                 end_value = _format_time_match(end_match, fallback_period=start_match.group("period"))
+                end_value = _adjust_inferred_pm_range_end(
+                    start_match=start_match,
+                    start_value=start_value,
+                    end_match=end_match,
+                    end_value=end_value,
+                )
                 if end_value is None:
                     return ExtractedTime(start_value=start_value, text=start_match.group(0))
 
@@ -449,6 +455,29 @@ def _extract_time(source_text: str) -> ExtractedTime:
             return ExtractedTime(start_value=value, text=text, is_ambiguous=True)
 
     return ExtractedTime()
+
+
+def _adjust_inferred_pm_range_end(
+    start_match: re.Match[str],
+    start_value: str,
+    end_match: re.Match[str],
+    end_value: str | None,
+) -> str | None:
+    """시작 시간이 오후로 추론된 범위에서 종료 시간도 같은 오후 맥락으로 보정합니다."""
+    if end_value is None:
+        return None
+
+    if start_match.group("period") or end_match.group("period"):
+        return end_value
+
+    start_hour = int(start_value.split(":", maxsplit=1)[0])
+    end_hour = int(end_value.split(":", maxsplit=1)[0])
+    raw_end_hour = int(end_match.group("hour"))
+
+    if start_hour >= 12 and end_hour < start_hour and 1 <= raw_end_hour <= 11:
+        return _format_time_match(end_match, fallback_period="오후")
+
+    return end_value
 
 
 def _format_time_match(match: re.Match[str], fallback_period: str | None = None) -> str | None:
