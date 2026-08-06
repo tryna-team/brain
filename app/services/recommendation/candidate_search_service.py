@@ -96,19 +96,26 @@ class CandidateSearchService:
         vector_candidates: list[RecommendationCandidateRecord],
         limit: int = RECOMMENDATION_RESULT_LIMIT,
     ) -> list[RecommendationCandidateRecord]:
-        relation_candidates_by_code = {
-            candidate.code: candidate
-            for candidate in relation_candidates
-        }
-        vector_candidates_by_code = {
-            candidate.code: candidate
-            for candidate in vector_candidates
-        }
-
-        def merge_candidate(
+        def merge_candidate_records(
             existing_candidate: RecommendationCandidateRecord,
-            vector_candidate: RecommendationCandidateRecord,
+            incoming_candidate: RecommendationCandidateRecord,
         ) -> RecommendationCandidateRecord:
+            default_ranks = [
+                rank
+                for rank in (
+                    existing_candidate.default_rank,
+                    incoming_candidate.default_rank,
+                )
+                if rank is not None
+            ]
+            vector_scores = [
+                score
+                for score in (
+                    existing_candidate.vector_score,
+                    incoming_candidate.vector_score,
+                )
+                if score is not None
+            ]
             matched_by = list(existing_candidate.matched_by)
             matched_by_keys = {
                 (
@@ -120,7 +127,7 @@ class CandidateSearchService:
                 for item in matched_by
             }
 
-            for item in vector_candidate.matched_by:
+            for item in incoming_candidate.matched_by:
                 key = (
                     tuple(item.source_labels),
                     item.source_code,
@@ -134,9 +141,40 @@ class CandidateSearchService:
 
             return replace(
                 existing_candidate,
-                vector_score=vector_candidate.vector_score,
+                default_rank=min(default_ranks) if default_ranks else None,
+                vector_score=max(vector_scores) if vector_scores else None,
                 matched_by=matched_by,
             )
+
+        def coalesce_by_code(
+            candidates: list[RecommendationCandidateRecord],
+        ) -> list[RecommendationCandidateRecord]:
+            candidates_by_code: dict[
+                str,
+                RecommendationCandidateRecord,
+            ] = {}
+
+            for candidate in candidates:
+                existing_candidate = candidates_by_code.get(candidate.code)
+                candidates_by_code[candidate.code] = (
+                    merge_candidate_records(existing_candidate, candidate)
+                    if existing_candidate is not None
+                    else candidate
+                )
+
+            return list(candidates_by_code.values())
+
+        relation_candidates = coalesce_by_code(relation_candidates)
+        vector_candidates = coalesce_by_code(vector_candidates)
+
+        relation_candidates_by_code = {
+            candidate.code: candidate
+            for candidate in relation_candidates
+        }
+        vector_candidates_by_code = {
+            candidate.code: candidate
+            for candidate in vector_candidates
+        }
 
         relation_limit = min(RECOMMENDATION_RELATION_LIMIT, limit)
         selected_candidates: list[RecommendationCandidateRecord] = []
@@ -147,7 +185,7 @@ class CandidateSearchService:
                 relation_candidate.code
             )
             selected_candidate = (
-                merge_candidate(relation_candidate, vector_candidate)
+                merge_candidate_records(relation_candidate, vector_candidate)
                 if vector_candidate is not None
                 else relation_candidate
             )
@@ -178,7 +216,7 @@ class CandidateSearchService:
                 vector_candidate.code
             )
             selected_candidate = (
-                merge_candidate(relation_candidate, vector_candidate)
+                merge_candidate_records(relation_candidate, vector_candidate)
                 if relation_candidate is not None
                 else vector_candidate
             )
