@@ -47,6 +47,7 @@ env/
 .coverage
 htmlcov/
 .tox/
+/evaluation/results/
 
 # Logs
 *.log

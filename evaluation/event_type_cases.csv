@@ -1,0 +1,101 @@
+case_id,query,expected_code,difficulty,note
+ET001,금요일 오후 3시 호텔 체크인,accommodation_checkin,easy,명시적 표현
+ET002,토요일에 예약한 펜션 입실,accommodation_checkin,easy,숙소 입실
+ET003,제주 도착하고 리조트 들어가기,accommodation_checkin,medium,체크인 간접 표현
+ET004,저녁 6시 에어비앤비 숙박 시작,accommodation_checkin,medium,숙박 시작 표현
+ET005,다음 주 월요일 레포트 제출,assignment,easy,명시적 표현
+ET006,금요일 자정까지 팀플 결과물 내기,assignment,easy,제출 마감 표현
+ET007,공모전 파일 최종 제출,assignment,easy,공모전 제출
+ET008,내일까지 과제 마무리해서 올리기,assignment,medium,제출 간접 표현
+ET009,토요일 민영이 생일,birthday,easy,지인 생일
+ET010,다음 주 엄마 생신,birthday,easy,가족 생신
+ET011,친구 생일 케이크 준비하기,birthday,medium,축하 준비
+ET012,아빠 생일 저녁 약속,birthday,medium,식사와 생일 중 생일 우선
+ET013,월요일 오전 전공 강의,class_session,easy,전공 수업
+ET014,오늘 저녁 온라인 강의 듣기,class_session,easy,온라인 수업
+ET015,수요일 교양 수업,class_session,easy,교양 수업
+ET016,이번 주말 데이터 분석 특강 수강,class_session,medium,특강
+ET017,금요일 친구랑 저녁 먹기,dining_meetup,easy,식사 약속
+ET018,내일 가족 외식,dining_meetup,easy,가족 식사
+ET019,점심에 거래처 담당자와 식사,dining_meetup,medium,업무 관계지만 식사가 핵심
+ET020,주말에 소개팅으로 카페 가기,dining_meetup,medium,소개팅과 카페
+ET021,다음 주 화요일 전공 중간고사,exam,easy,중간고사
+ET022,토요일 한국사 자격시험,exam,easy,자격시험
+ET023,오전 10시 온라인 퀴즈 응시,exam,easy,온라인 평가
+ET024,내일 시험장 가서 모의고사 보기,exam,medium,시험 참여
+ET025,월요일 고객사 미팅,external_work_meeting,easy,고객사 회의
+ET026,오후 2시 거래처 방문 회의,external_work_meeting,easy,외부 관계자 회의
+ET027,협력사 담당자와 온라인 미팅,external_work_meeting,easy,온라인 외부 미팅
+ET028,납품 일정 논의하러 외부 업체 방문,external_work_meeting,medium,간접 표현
+ET029,일요일 조카 돌잔치,first_birthday,easy,조카 첫돌
+ET030,친구 아기 첫돌 행사 가기,first_birthday,easy,첫돌 행사
+ET031,토요일 돌잔치 참석,first_birthday,easy,명시적 표현
+ET032,아기 첫 생일 축하하러 호텔 가기,first_birthday,medium,돌잔치 간접 표현
+ET033,다음 달 첫 출근,first_day_onboarding,easy,첫 출근
+ET034,월요일 입사 오리엔테이션,first_day_onboarding,easy,입사 안내
+ET035,신입사원 온보딩 참석,first_day_onboarding,easy,온보딩
+ET036,새 회사에서 처음 근무하는 날,first_day_onboarding,medium,간접 표현
+ET037,오늘 저녁 장례식장 조문,funeral,easy,조문
+ET038,회사 선배 아버님 빈소 방문,funeral,easy,빈소 방문
+ET039,토요일 발인 참석,funeral,easy,발인
+ET040,부고 연락받고 장례식장 가기,funeral,medium,장례 참석
+ET041,저녁에 친구들과 시험 스터디,group_study,easy,그룹 학습
+ET042,목요일 전공 스터디 모임,group_study,easy,스터디 모임
+ET043,팀원들과 기출문제 같이 풀기,group_study,medium,공동 학습
+ET044,도서관에서 셋이 발표 준비 공부,group_study,medium,여러 명의 학습
+ET045,화요일 회사 1차 면접,job_interview,easy,채용 면접
+ET046,내일 오후 화상 면접,job_interview,easy,온라인 면접
+ET047,주말 아르바이트 면접,job_interview,easy,아르바이트 채용
+ET048,인턴 지원한 곳 최종 인터뷰,job_interview,medium,면접 유사 표현
+ET049,금요일 오후 팀플 회의,meeting,easy,팀플 회의
+ET050,매주 월요일 회사 주간회의,meeting,easy,회사 회의
+ET051,팀장님과 온라인 1대1,meeting,medium,일대일 회의
+ET052,프로젝트 진행 상황 중간 점검,meeting,medium,회의 간접 표현
+ET053,내일만 본사로 출근,nonroutine_commute,easy,다른 근무지 출근
+ET054,월요일 교육장으로 바로 출근,nonroutine_commute,easy,교육장 출근
+ET055,이번 주 금요일 새 사무실로 출근,nonroutine_commute,easy,새 목적지
+ET056,내일 평소보다 두 시간 일찍 출근,nonroutine_commute,medium,비정상 출근 시간
+ET057,오늘 저녁 일본어 공부하기,self_study,easy,혼자 공부
+ET058,도서관에서 중간고사 범위 복습,self_study,easy,개인 복습
+ET059,카페에서 혼자 자격증 공부,self_study,easy,개인 학습
+ET060,강의 자료 읽고 문제 풀기,self_study,medium,혼자 하는 학습
+ET061,토요일에 친구 만나기,social_meetup,easy,친구 약속
+ET062,주말 데이트,social_meetup,easy,데이트
+ET063,저녁에 가족 모임,social_meetup,easy,가족 모임
+ET064,오랜만에 동창들과 만나서 놀기,social_meetup,medium,사적 만남
+ET065,토요일 저녁 영화 보기,ticketed_outing,easy,영화 관람
+ET066,다음 주 뮤지컬 관람,ticketed_outing,easy,공연 관람
+ET067,일요일 미술관 전시 보러 가기,ticketed_outing,easy,전시 관람
+ET068,금요일 야구 경기 직관,ticketed_outing,easy,스포츠 관람
+ET069,월요일 오전 인천공항에서 비행기 타기,transport_departure,easy,항공편 탑승
+ET070,오후 2시 서울역 KTX 탑승,transport_departure,easy,기차 탑승
+ET071,부산행 고속버스 출발,transport_departure,easy,버스 탑승
+ET072,제주행 여객선 타는 시간,transport_departure,medium,선박 탑승
+ET073,금요일 제주도 여행 출발,travel_departure,easy,국내 여행 시작
+ET074,다음 달 일본 여행 떠나는 날,travel_departure,easy,해외 여행 시작
+ET075,여름휴가 출발,travel_departure,easy,휴가 출발
+ET076,아침에 짐 챙겨서 부산으로 떠나기,travel_departure,medium,여행 시작 간접 표현
+ET077,토요일 친구 결혼식,wedding,easy,친구 결혼식
+ET078,다음 주 사촌 결혼식 참석,wedding,easy,가족 결혼식
+ET079,회사 동료 예식 가기,wedding,medium,예식 유사 표현
+ET080,일요일 호텔에서 민수 결혼 축하하기,wedding,medium,결혼식 간접 표현
+ET081,내일 일정 확인하기,,negative,이벤트 종류를 판단할 정보 없음
+ET082,할 일 정리,,negative,구체적인 이벤트 없음
+ET083,캘린더 보기,,negative,기능 행동
+ET084,잊지 않기,,negative,대상 없음
+ET085,ㅋㅋㅋ,,negative,무의미 입력
+ET086,좋은 하루 보내기,,negative,구체적인 일정 없음
+ET087,오후 3시,,negative,시간 정보만 있음
+ET088,서울 강남,,negative,장소 정보만 있음
+ET089,다음 주 화요일,,negative,날짜 정보만 있음
+ET090,준비하기,,negative,대상 없는 행동
+ET091,친구 만나서 저녁 먹기,dining_meetup,hard,친구 만남보다 식사 목적 우선 가정
+ET092,카페에서 팀플 회의,meeting,hard,장소보다 회의 목적 우선
+ET093,친구들과 카페에서 시험공부,group_study,hard,사적 만남보다 공동 학습 우선
+ET094,혼자 영화 공부하기,self_study,hard,관람이 아니라 학습으로 가정
+ET095,여행 가려고 인천공항에서 비행기 타기,transport_departure,hard,여행보다 구체적인 교통 탑승 우선
+ET096,제주 여행 시작하는 날,travel_departure,hard,교통편이 명시되지 않은 여행 시작
+ET097,온라인으로 고객사 담당자 면접 보기,job_interview,hard,채용 면접이라는 전제
+ET098,입사 첫날 신입사원 교육,first_day_onboarding,hard,수업보다 입사 첫날 우선
+ET099,생일이라 가족과 저녁 먹기,birthday,hard,식사보다 생일 일정 우선 가정
+ET100,공모전 팀원들과 최종 결과물 회의,meeting,hard,제출이 아닌 논의 일정

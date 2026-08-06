@@ -1,0 +1,51 @@
+case_id,query,expected_resolved_codes,difficulty,note
+CT001,오늘 저녁 일본어 공부하기,academic,easy,개인 학습
+CT002,도서관에서 중간고사 복습,academic,easy,시험 준비
+CT003,월요일 전공 강의 듣기,academic,easy,수업
+CT004,금요일까지 레포트 제출,academic,medium,과제 제출
+CT005,친구들과 시험 스터디,academic,medium,학업 중심
+CT006,이번 주말 제주도 여행,domestic_travel;travel,easy,국내 여행
+CT007,부산으로 1박 2일 떠나기,domestic_travel;travel,easy,국내 숙박 여행
+CT008,강릉 여행 출발,domestic_travel;travel,easy,국내 목적지
+CT009,KTX 타고 경주 여행,domestic_travel;travel,medium,교통편 포함 국내 여행
+CT010,여름휴가로 제주 가기,domestic_travel;travel,medium,국내 휴가
+CT011,토요일에 친구 만나기,hangout,easy,친구 약속
+CT012,주말 데이트,hangout,easy,데이트
+CT013,저녁에 가족 모임,hangout,easy,가족 모임
+CT014,동창들과 한강 피크닉,hangout,medium,사적 야외 모임
+CT015,친구랑 카페에서 수다,hangout,medium,사적 만남
+CT016,다음 달 일본 여행,international_travel;travel,easy,해외 여행
+CT017,도쿄 3박 4일 여행,international_travel;travel,easy,해외 목적지
+CT018,여름에 유럽으로 휴가 가기,international_travel;travel,easy,해외 휴가
+CT019,인천공항에서 국제선 출국,international_travel;travel,medium,해외 출국
+CT020,오사카 여행 출발,international_travel;travel,medium,해외 여행 시작
+CT021,이번 주 친구 결혼식,social_occasion,easy,결혼식
+CT022,다음 주 엄마 생신,social_occasion,easy,생일
+CT023,일요일 조카 돌잔치,social_occasion,easy,첫돌 행사
+CT024,오늘 저녁 장례식장 조문,social_occasion,easy,장례식
+CT025,친구 생일 축하하러 가기,social_occasion,medium,생일 행사
+CT026,금요일 팀 프로젝트 회의,team_project,easy,팀 프로젝트
+CT027,조별 과제 역할 나누기,team_project,easy,조별 과제
+CT028,캡스톤 결과물 같이 만들기,team_project,easy,캡스톤
+CT029,해커톤 팀 작업,team_project,easy,해커톤
+CT030,공모전 팀원들과 기획하기,team_project,medium,공모전 협업
+CT031,주말에 가족여행,travel,easy,지역 미지정 여행
+CT032,다음 주 휴가 떠나기,travel,easy,목적지 미지정
+CT033,친구와 1박 2일 여행,travel,easy,지역 미지정 여행
+CT034,여행 준비하고 출발하기,travel,medium,여행 시작
+CT035,숙박하면서 쉬는 여행,travel,medium,목적지 미지정
+CT036,월요일 회사 1차 면접,work_career,easy,채용 면접
+CT037,다음 주 첫 출근,work_career,easy,첫 출근
+CT038,오후 고객사 미팅,work_career,easy,외부 업무 회의
+CT039,팀장님과 주간 1대1,work_career,easy,회사 회의
+CT040,내일만 다른 지점으로 출근,work_career,medium,비정상 출근
+CT041,팀플 과제 결과물 제출,academic;team_project,hard,학업과 팀 프로젝트 복수 맥락
+CT042,친구들과 전공 시험 공부,academic,hard,친구 모임보다 학업 중심
+CT043,회사 동료와 프로젝트 회의,work_career,hard,회사 프로젝트
+CT044,공모전 팀으로 해커톤 참가,team_project,hard,복수 팀 활동 표현
+CT045,친구와 부산 여행,domestic_travel;hangout;travel,hard,국내 여행과 사적 동행
+CT046,내일 일정 확인하기,,negative,구체적 맥락 없음
+CT047,오후 3시,,negative,시간만 있음
+CT048,준비하기,,negative,대상 없는 행동
+CT049,서울 강남,,negative,장소만 있음
+CT050,잊지 않기,,negative,대상 없는 표현
