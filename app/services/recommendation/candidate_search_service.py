@@ -15,6 +15,10 @@ from app.graph.models.recommendation_candidate import (
 from app.schemas.recommendation.candidates import CandidateSearchResult
 from app.schemas.recommendation.schedule_context import ScheduleContextResult
 
+RECOMMENDATION_RELATION_LIMIT = 6
+RECOMMENDATION_VECTOR_LIMIT = 2
+RECOMMENDATION_RESULT_LIMIT = 8
+
 
 class CandidateSearchService:
     def __init__(
@@ -90,31 +94,21 @@ class CandidateSearchService:
         self,
         relation_candidates: list[RecommendationCandidateRecord],
         vector_candidates: list[RecommendationCandidateRecord],
-        limit: int = 8,
+        limit: int = RECOMMENDATION_RESULT_LIMIT,
     ) -> list[RecommendationCandidateRecord]:
-        candidates_by_code = {
+        relation_candidates_by_code = {
             candidate.code: candidate
             for candidate in relation_candidates
         }
+        vector_candidates_by_code = {
+            candidate.code: candidate
+            for candidate in vector_candidates
+        }
 
-        relation_order = [
-            candidate.code
-            for candidate in relation_candidates
-        ]
-        vector_only_codes: list[str] = []
-
-        for vector_candidate in vector_candidates:
-            existing_candidate = candidates_by_code.get(
-                vector_candidate.code
-            )
-
-            if existing_candidate is None:
-                candidates_by_code[vector_candidate.code] = (
-                    vector_candidate
-                )
-                vector_only_codes.append(vector_candidate.code)
-                continue
-
+        def merge_candidate(
+            existing_candidate: RecommendationCandidateRecord,
+            vector_candidate: RecommendationCandidateRecord,
+        ) -> RecommendationCandidateRecord:
             matched_by = list(existing_candidate.matched_by)
             matched_by_keys = {
                 (
@@ -138,21 +132,61 @@ class CandidateSearchService:
                     matched_by.append(item)
                     matched_by_keys.add(key)
 
-            candidates_by_code[vector_candidate.code] = replace(
+            return replace(
                 existing_candidate,
                 vector_score=vector_candidate.vector_score,
                 matched_by=matched_by,
             )
 
-        ordered_codes = [
-            *relation_order,
-            *vector_only_codes,
-        ]
+        relation_limit = min(RECOMMENDATION_RELATION_LIMIT, limit)
+        selected_candidates: list[RecommendationCandidateRecord] = []
+        selected_codes: set[str] = set()
 
-        return [
-            candidates_by_code[code]
-            for code in ordered_codes[:limit]
-        ]
+        for relation_candidate in relation_candidates[:relation_limit]:
+            vector_candidate = vector_candidates_by_code.get(
+                relation_candidate.code
+            )
+            selected_candidate = (
+                merge_candidate(relation_candidate, vector_candidate)
+                if vector_candidate is not None
+                else relation_candidate
+            )
+            selected_candidates.append(selected_candidate)
+            selected_codes.add(selected_candidate.code)
+
+        available_vector_slots = min(
+            RECOMMENDATION_VECTOR_LIMIT,
+            limit - len(selected_candidates),
+        )
+
+        ordered_vector_candidates = sorted(
+            vector_candidates,
+            key=lambda candidate: (
+                -(candidate.vector_score or 0.0),
+                candidate.code,
+            ),
+        )
+
+        for vector_candidate in ordered_vector_candidates:
+            if (
+                vector_candidate.code in selected_codes
+                or available_vector_slots == 0
+            ):
+                continue
+
+            relation_candidate = relation_candidates_by_code.get(
+                vector_candidate.code
+            )
+            selected_candidate = (
+                merge_candidate(relation_candidate, vector_candidate)
+                if relation_candidate is not None
+                else vector_candidate
+            )
+            selected_candidates.append(selected_candidate)
+            selected_codes.add(selected_candidate.code)
+            available_vector_slots -= 1
+
+        return selected_candidates
 
     # 벡터화된 사용자 입력값으로 neo4j에서 실행 항목 조회(D102 핵심 함수)
     def search(
@@ -277,7 +311,9 @@ class CandidateSearchService:
                         context.temp_event_id,
                     )
 
-                    recommendation_records = relation_candidates
+                    recommendation_records = relation_candidates[
+                        :RECOMMENDATION_RESULT_LIMIT
+                    ]
                     lookup_status = "PARTIAL_ERROR"
                     errors.append(
                         "Neo4j 벡터 기반 추천 후보 조회에 실패했습니다."
