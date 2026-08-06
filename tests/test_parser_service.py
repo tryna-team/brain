@@ -177,6 +177,22 @@ def test_time_range_from_to_sets_start_and_end_time():
     assert result.to_embedding == ["팀플", "회의"]
 
 
+def test_time_range_end_without_period_inherits_inferred_afternoon():
+    result = parse_event_text("3시부터 8시까지 봉사 준비")
+
+    assert result.start_time == "15:00"
+    assert result.end_time == "20:00"
+    assert result.to_embedding == ["봉사", "준비"]
+
+
+def test_explicit_morning_time_range_keeps_end_morning():
+    result = parse_event_text("오전 3시부터 8시까지 봉사 준비")
+
+    assert result.start_time == "03:00"
+    assert result.end_time == "08:00"
+    assert result.to_embedding == ["봉사", "준비"]
+
+
 def test_time_range_with_tilde_sets_start_and_end_time():
     result = parse_event_text("금요일 오후 3시 ~ 4시 팀플 회의")
 
