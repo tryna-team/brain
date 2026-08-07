@@ -1,4 +1,4 @@
-"""Backfill passage embeddings for the D102 travel Context test nodes.
+"""Backfill missing passage embeddings for active Context nodes.
 
 Running without ``--apply`` only validates and prints the targets. Actual writes
 require an explicit ``--apply`` flag because this script can target production.
@@ -11,14 +11,6 @@ import argparse
 from app.core.config import settings
 from app.graph.neo4j_client import neo4j_client
 from app.services.recommendation.embedding_service import EmbeddingService
-
-
-TARGET_CONTEXT_CODES = (
-    "academic",
-    "hangout",
-    "team_project",
-    "work_career",
-)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -40,50 +32,44 @@ def _database_kwargs() -> dict[str, str]:
 
 
 def _load_targets() -> list[dict]:
-    existing_records, _, _ = neo4j_client.driver.execute_query(
+    skipped_records, _, _ = neo4j_client.driver.execute_query(
         """
         MATCH (node:Context)
-        WHERE node.code IN $codes
+        WHERE node.isActive = true
+          AND node.embedding IS NULL
+          AND (
+              node.embeddingText IS NULL
+              OR trim(node.embeddingText) = ''
+          )
         RETURN node.code AS code
+        ORDER BY node.code
         """,
-        codes=list(TARGET_CONTEXT_CODES),
         **_database_kwargs(),
     )
 
-    found_codes = {record["code"] for record in existing_records}
-    missing_codes = set(TARGET_CONTEXT_CODES) - found_codes
-
-    if missing_codes:
-        raise RuntimeError(
-            "Neo4j에 대상 Context가 없습니다: "
-            + ", ".join(sorted(missing_codes))
+    for record in skipped_records:
+        print(
+            f"skipped: Context/{record['code']}, "
+            "reason=empty embeddingText"
         )
 
     target_records, _, _ = neo4j_client.driver.execute_query(
         """
         MATCH (node:Context)
-        WHERE node.code IN $codes
-          AND node.isActive = true
+        WHERE node.isActive = true
           AND node.embedding IS NULL
+          AND node.embeddingText IS NOT NULL
+          AND trim(node.embeddingText) <> ''
         RETURN
             node.code AS code,
             node.embeddingText AS embeddingText,
             node.isActive AS isActive
         ORDER BY node.code
         """,
-        codes=list(TARGET_CONTEXT_CODES),
         **_database_kwargs(),
     )
 
-    targets = [dict(record) for record in target_records]
-
-    for target in targets:
-        code = target["code"]
-
-        if not target["embeddingText"]:
-            raise RuntimeError(f"embeddingText가 없습니다: {code}")
-
-    return targets
+    return [dict(record) for record in target_records]
 
 
 def _generate_embeddings(targets: list[dict]) -> list[dict]:
