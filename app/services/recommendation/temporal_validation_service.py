@@ -1,12 +1,9 @@
-import logging
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from app.schemas.recommendation.refinement import RecommendationRefinementResult, RefinedRecommendationItem
 from app.schemas.recommendation.schedule_context import ScheduleContext
 from app.schemas.recommendation.temporal import TemporalRecommendationItem, TemporalValidationResult
-
-logger = logging.getLogger(__name__)
 
 
 ASIA_SEOUL = ZoneInfo("Asia/Seoul")
@@ -30,7 +27,7 @@ class TemporalValidationService:
             temporalStatus="NO_ITEMS",
             items=[],
             scheduleContext=refinement_result.schedule_context,
-            errors=[]
+            errors=list(refinement_result.errors),
         )
     
     
@@ -84,35 +81,8 @@ class TemporalValidationService:
             defaultTiming=item.default_timing,
             selectionRank=item.selection_rank,
         )
+
     
-    def _build_error_result(
-        self,
-        refinement_result: RecommendationRefinementResult,
-        message: str,
-    ) -> TemporalValidationResult:
-        sorted_items = sorted(
-            refinement_result.refined_items,
-            key=lambda item: item.selection_rank,
-        )
-
-        fallback_items = [
-            self._build_temporal_item(
-                item=item,
-                display_date=None,
-            )
-            for item in sorted_items
-        ]
-
-        return TemporalValidationResult(
-            tempEventId=refinement_result.temp_event_id,
-            draftRevision=refinement_result.draft_revision,
-            temporalStatus="ERROR",
-            items=fallback_items,
-            scheduleContext=refinement_result.schedule_context,
-            errors=[message],
-        )
-    
-
     def temporal_validate(
         self,
         refinement_result: RecommendationRefinementResult,
@@ -120,47 +90,38 @@ class TemporalValidationService:
         if not refinement_result.refined_items:
             return self._build_no_items_result(refinement_result)
 
-        try:
-            sorted_items = sorted(
-                refinement_result.refined_items,
-                key=lambda item: item.selection_rank,
+        sorted_items = sorted(
+            refinement_result.refined_items,
+            key=lambda item: item.selection_rank,
+        )
+
+        temporal_items: list[TemporalRecommendationItem] = []
+        timed_item_count = 0
+
+        for item in sorted_items:
+            display_date = self._resolve_display_date(
+                item=item,
+                schedule_context=refinement_result.schedule_context,
             )
 
-            temporal_items: list[TemporalRecommendationItem] = []
-            timed_item_count = 0
+            if display_date is not None:
+                if timed_item_count >= MAX_TIMED_ITEMS:
+                    display_date = None
+                else:
+                    timed_item_count += 1
 
-            for item in sorted_items:
-                display_date = self._resolve_display_date(
+            temporal_items.append(
+                self._build_temporal_item(
                     item=item,
-                    schedule_context=refinement_result.schedule_context,
+                    display_date=display_date,
                 )
-
-                if display_date is not None:
-                    if timed_item_count >= MAX_TIMED_ITEMS:
-                        display_date = None
-                    else:
-                        timed_item_count += 1
-
-                temporal_items.append(
-                    self._build_temporal_item(
-                        item=item,
-                        display_date=display_date,
-                    )
-                )
-
-            return TemporalValidationResult(
-                tempEventId=refinement_result.temp_event_id,
-                draftRevision=refinement_result.draft_revision,
-                temporalStatus="SUCCESS",
-                items=temporal_items,
-                scheduleContext=refinement_result.schedule_context,
-                errors=[],
             )
 
-        except Exception:
-            logger.exception("D104 시간 맥락 검증 실패")
-
-            return self._build_error_result(
-                refinement_result=refinement_result,
-                message="D104 temporal validation failed.",
-            )
+        return TemporalValidationResult(
+            tempEventId=refinement_result.temp_event_id,
+            draftRevision=refinement_result.draft_revision,
+            temporalStatus="SUCCESS",
+            items=temporal_items,
+            scheduleContext=refinement_result.schedule_context,
+            errors=list(refinement_result.errors),
+        )

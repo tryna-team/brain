@@ -177,6 +177,22 @@ def test_time_range_from_to_sets_start_and_end_time():
     assert result.to_embedding == ["팀플", "회의"]
 
 
+def test_time_range_end_without_period_inherits_inferred_afternoon():
+    result = parse_event_text("3시부터 8시까지 봉사 준비")
+
+    assert result.start_time == "15:00"
+    assert result.end_time == "20:00"
+    assert result.to_embedding == ["봉사", "준비"]
+
+
+def test_explicit_morning_time_range_keeps_end_morning():
+    result = parse_event_text("오전 3시부터 8시까지 봉사 준비")
+
+    assert result.start_time == "03:00"
+    assert result.end_time == "08:00"
+    assert result.to_embedding == ["봉사", "준비"]
+
+
 def test_time_range_with_tilde_sets_start_and_end_time():
     result = parse_event_text("금요일 오후 3시 ~ 4시 팀플 회의")
 
@@ -225,6 +241,36 @@ def test_week_aliases_are_parsed_as_this_and_next_week():
     assert this_week.date_source == "RELATIVE_EXPRESSION"
     assert next_week.to_embedding == ["팀플", "회의"]
     assert next_week.date_source == "RELATIVE_EXPRESSION"
+
+
+def test_relative_week_without_weekday_uses_current_weekday(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    monkeypatch.setattr(
+        parser_service,
+        "_today_in_service_timezone",
+        lambda: date(2026, 7, 21),
+    )
+
+    this_week = parser_service.parse_event_text("이번주 회의")
+    this_week_alias = parser_service.parse_event_text("요번주 회의")
+    next_week = parser_service.parse_event_text("다음주 회의")
+    next_week_alias = parser_service.parse_event_text("담 주 회의")
+    week_after_next = parser_service.parse_event_text("다다음주 회의")
+    explicit_weekday = parser_service.parse_event_text("다음주 금요일 회의")
+    weekend = parser_service.parse_event_text("다음주말 회의")
+
+    assert this_week.start_date == "2026-07-21"
+    assert this_week_alias.start_date == "2026-07-21"
+    assert next_week.start_date == "2026-07-28"
+    assert next_week_alias.start_date == "2026-07-28"
+    assert week_after_next.start_date == "2026-08-04"
+    assert explicit_weekday.start_date == "2026-07-31"
+    assert weekend.start_date is None
+    assert next_week.date_source == "RELATIVE_EXPRESSION"
+    assert next_week.to_embedding == ["회의"]
+    assert explicit_weekday.date_source == "RELATIVE_EXPRESSION"
+    assert explicit_weekday.to_embedding == ["회의"]
 
 
 class FakeKiwiToken:

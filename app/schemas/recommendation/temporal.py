@@ -9,7 +9,6 @@ from app.schemas.recommendation.schedule_context import ScheduleContext
 TemporalStatus = Literal[
     "SUCCESS",
     "NO_ITEMS",
-    "ERROR",
 ]
 
 ItemType = Literal[

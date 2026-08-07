@@ -14,15 +14,16 @@ from app.services.recommendation.embedding_service import EmbeddingService
 
 
 TARGET_CONTEXT_CODES = (
-    "travel",
-    "domestic_travel",
-    "international_travel",
+    "academic",
+    "hangout",
+    "team_project",
+    "work_career",
 )
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="D102 여행 Context 노드의 passage embedding을 저장합니다.",
+        description="Context 노드의 passage embedding을 저장합니다.",
     )
     parser.add_argument(
         "--apply",
@@ -32,29 +33,24 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _database_kwargs() -> dict[str, str]:
+    if not settings.neo4j_database:
+        return {}
+    return {"database_": settings.neo4j_database}
+
+
 def _load_targets() -> list[dict]:
-    query_kwargs = (
-        {"database_": settings.neo4j_database}
-        if settings.neo4j_database
-        else {}
-    )
-    records, _, _ = neo4j_client.driver.execute_query(
+    existing_records, _, _ = neo4j_client.driver.execute_query(
         """
         MATCH (node:Context)
         WHERE node.code IN $codes
-        RETURN
-            node.code AS code,
-            node.embeddingText AS embeddingText,
-            node.embedding IS NOT NULL AS hasEmbedding,
-            node.isActive AS isActive
-        ORDER BY node.code
+        RETURN node.code AS code
         """,
         codes=list(TARGET_CONTEXT_CODES),
-        **query_kwargs,
+        **_database_kwargs(),
     )
 
-    targets = [dict(record) for record in records]
-    found_codes = {target["code"] for target in targets}
+    found_codes = {record["code"] for record in existing_records}
     missing_codes = set(TARGET_CONTEXT_CODES) - found_codes
 
     if missing_codes:
@@ -63,15 +59,29 @@ def _load_targets() -> list[dict]:
             + ", ".join(sorted(missing_codes))
         )
 
+    target_records, _, _ = neo4j_client.driver.execute_query(
+        """
+        MATCH (node:Context)
+        WHERE node.code IN $codes
+          AND node.isActive = true
+          AND node.embedding IS NULL
+        RETURN
+            node.code AS code,
+            node.embeddingText AS embeddingText,
+            node.isActive AS isActive
+        ORDER BY node.code
+        """,
+        codes=list(TARGET_CONTEXT_CODES),
+        **_database_kwargs(),
+    )
+
+    targets = [dict(record) for record in target_records]
+
     for target in targets:
         code = target["code"]
 
-        if target["isActive"] is not True:
-            raise RuntimeError(f"비활성 Context입니다: {code}")
         if not target["embeddingText"]:
             raise RuntimeError(f"embeddingText가 없습니다: {code}")
-        if target["hasEmbedding"]:
-            raise RuntimeError(f"이미 embedding이 존재합니다: {code}")
 
     return targets
 
@@ -136,6 +146,10 @@ def main() -> None:
 
     try:
         targets = _load_targets()
+
+        if not targets:
+            print("complete: 임베딩이 필요한 활성 Context가 없습니다.")
+            return
 
         for target in targets:
             print(

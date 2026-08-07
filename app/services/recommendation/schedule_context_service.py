@@ -1,3 +1,5 @@
+import logging
+
 from app.schemas.recommendation.recommendation import RecommendationRequest
 from app.services.recommendation.embedding_service import EmbeddingService
 from app.core.exceptions import BusinessException
@@ -8,6 +10,8 @@ from app.schemas.recommendation.schedule_context import (
     ScheduleContextResult,
     TimeCandidate,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ScheduleContextService:
@@ -96,7 +100,13 @@ class ScheduleContextService:
 
         try:
             query_embedding = self.embedding_service.embed(semantic_input)
-        except BusinessException:
+        except BusinessException as exc:
+            logger.warning(
+                "D101 embedding failed: tempEventId=%s, errorCode=%s",
+                request.temp_event_id,
+                exc.error_code.name,
+            )
+
             return ScheduleContextResult(
                 tempEventId=request.temp_event_id,
                 draftRevision=request.draft_revision,
@@ -105,6 +115,8 @@ class ScheduleContextService:
                 semanticInputVersion="v1",
                 scheduleContext=schedule_context,
                 embeddingMeta=None,
+                errorCode=exc.error_code.name,
+                errors=[exc.message],
             )
 
         return ScheduleContextResult(

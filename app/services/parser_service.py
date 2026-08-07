@@ -213,6 +213,13 @@ def _extract_date(source_text: str) -> ExtractedValue:
                 )
             )
 
+    _add_relative_week_candidates_without_weekday(
+        source_text=source_text,
+        today=today,
+        candidates=candidates,
+        removable_texts=removable_texts,
+    )
+
     for weekday_text, weekday in WEEKDAY_INDEX.items():
         for relative_week_text, week_offset in (
             (f"이번 {weekday_text}", 0),
@@ -311,6 +318,50 @@ def _extract_date(source_text: str) -> ExtractedValue:
     return ExtractedValue(value=None)
 
 
+def _add_relative_week_candidates_without_weekday(
+    source_text: str,
+    today: date,
+    candidates: list[tuple[int, int, ExtractedValue]],
+    removable_texts: list[str],
+) -> None:
+    """요일 없이 주차만 입력된 표현은 서비스 기준 오늘과 같은 요일로 날짜를 계산합니다."""
+    for pattern, week_offset in (
+        (r"다다음\s*주", 2),
+        (r"(?:다음|담)\s*주", 1),
+        (r"(?:이번|요번)\s*주", 0),
+    ):
+        for match in re.finditer(pattern, source_text):
+            if _is_followed_by_weekday_or_weekend(source_text[match.end():]):
+                continue
+
+            parsed_date = _this_weekday(
+                today + timedelta(days=7 * week_offset),
+                today.weekday(),
+            )
+            removable_text = match.group(0)
+            removable_texts.append(removable_text)
+            candidates.append(
+                (
+                    match.start(),
+                    match.end(),
+                    ExtractedValue(
+                        value=parsed_date.isoformat(),
+                        text=removable_text,
+                        date_source="RELATIVE_EXPRESSION",
+                        is_past=parsed_date < today,
+                    ),
+                )
+            )
+
+
+def _is_followed_by_weekday_or_weekend(text_after_match: str) -> bool:
+    """주차 표현 뒤에 요일/주말이 바로 이어지면 더 구체적인 파싱 로직에 맡깁니다."""
+    stripped_text = text_after_match.lstrip()
+    return stripped_text.startswith("말") or any(
+        stripped_text.startswith(weekday_text) for weekday_text in WEEKDAY_INDEX
+    )
+
+
 def _extract_date_range(
     source_text: str,
     candidates: list[tuple[int, int, ExtractedValue]],
@@ -382,6 +433,12 @@ def _extract_time(source_text: str) -> ExtractedTime:
             end_match = _find_range_end_match(source_text, start_match, matches[1:])
             if end_match:
                 end_value = _format_time_match(end_match, fallback_period=start_match.group("period"))
+                end_value = _adjust_inferred_pm_range_end(
+                    start_match=start_match,
+                    start_value=start_value,
+                    end_match=end_match,
+                    end_value=end_value,
+                )
                 if end_value is None:
                     return ExtractedTime(start_value=start_value, text=start_match.group(0))
 
@@ -398,6 +455,29 @@ def _extract_time(source_text: str) -> ExtractedTime:
             return ExtractedTime(start_value=value, text=text, is_ambiguous=True)
 
     return ExtractedTime()
+
+
+def _adjust_inferred_pm_range_end(
+    start_match: re.Match[str],
+    start_value: str,
+    end_match: re.Match[str],
+    end_value: str | None,
+) -> str | None:
+    """시작 시간이 오후로 추론된 범위에서 종료 시간도 같은 오후 맥락으로 보정합니다."""
+    if end_value is None:
+        return None
+
+    if start_match.group("period") or end_match.group("period"):
+        return end_value
+
+    start_hour = int(start_value.split(":", maxsplit=1)[0])
+    end_hour = int(end_value.split(":", maxsplit=1)[0])
+    raw_end_hour = int(end_match.group("hour"))
+
+    if start_hour >= 12 and end_hour < start_hour and 1 <= raw_end_hour <= 11:
+        return _format_time_match(end_match, fallback_period="오후")
+
+    return end_value
 
 
 def _format_time_match(match: re.Match[str], fallback_period: str | None = None) -> str | None:

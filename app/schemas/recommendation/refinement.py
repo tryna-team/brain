@@ -54,4 +54,5 @@ class RecommendationRefinementResult(BaseModel):
     model_meta: RefinementModelMeta = Field(alias="modelMeta")
     refined_items: list[RefinedRecommendationItem] = Field(default_factory=list, alias="refinedItems", max_length=3)
     schedule_context: ScheduleContext = Field(alias="scheduleContext")
+    error_code: str | None = Field(default=None,alias="errorCode")
     errors: list[str] = Field(default_factory=list)
