@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from redis.exceptions import ConnectionError
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 from app.core.valkey_client import ValkeyClient
 
@@ -38,7 +38,7 @@ def test_connect_uses_tls_configuration(monkeypatch):
 def test_connect_fails_open_when_valkey_is_unavailable(monkeypatch):
     monkeypatch.setattr("app.core.valkey_client.settings.valkey_host", "valkey.example")
     redis = Mock()
-    redis.ping.side_effect = ConnectionError("unavailable")
+    redis.ping.side_effect = RedisConnectionError("unavailable")
     monkeypatch.setattr("app.core.valkey_client.Redis", Mock(return_value=redis))
     client = ValkeyClient()
 
