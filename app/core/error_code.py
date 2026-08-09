@@ -20,6 +20,7 @@ class ErrorCode(Enum):
 
     NEO4J_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "Neo4j 연결을 사용할 수 없습니다.")
     LLM_503 = (HTTPStatus.SERVICE_UNAVAILABLE, "LLM 연동을 사용할 수 없습니다.")
+    STALE_DRAFT_REVISION_409 = (HTTPStatus.CONFLICT, "최신 일정 입력이 존재하여 이전 추천 요청을 중단했습니다.")
 
 
     def __init__(self, status: HTTPStatus, message: str):

@@ -14,6 +14,8 @@ from app.services.recommendation.refinement_llm_service import RefinementLLMServ
 from app.services.recommendation.refinement_service import RecommendationRefinementService
 from app.services.recommendation.temporal_validation_service import TemporalValidationService
 from app.services.recommendation.suggestion_compose_service import SuggestionCompositionService
+from app.services.recommendation.revision_guard_service import RevisionGuardService
+from app.core.valkey_client import valkey_client
 
 
 def get_neo4j_client() -> Neo4jClient:
@@ -88,75 +90,29 @@ def get_suggestion_compose_service() -> SuggestionCompositionService:
 SuggestionCompositionServiceDep = Annotated[SuggestionCompositionService, Depends(get_suggestion_compose_service)]
 
 
+def get_revision_guard_service() -> RevisionGuardService:
+    return RevisionGuardService(client=valkey_client)
+
+
+RevisionGuardServiceDep = Annotated[RevisionGuardService, Depends(get_revision_guard_service)]
+
+
 def get_recommendation_service(
     schedule_context_service: ScheduleContextServiceDep,
     candidate_search_service: CandidateSearchServiceDep,
     refinement_service: RecommendationRefinementServiceDep,
     temporal_validation_service: TemporalValidationServiceDep,
-    suggestion_compose_service: SuggestionCompositionServiceDep
+    suggestion_compose_service: SuggestionCompositionServiceDep,
+    revision_guard_service: RevisionGuardServiceDep,
 ) -> RecommendationService:
     return RecommendationService(
         schedule_context_service=schedule_context_service,
         candidate_search_service=candidate_search_service,
         refinement_service=refinement_service,
         temporal_validation_service=temporal_validation_service,
-        suggestion_compose_service=suggestion_compose_service
+        suggestion_compose_service=suggestion_compose_service,
+        revision_guard_service=revision_guard_service,
     )
 
 
 RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
-
-
-
-# 참고용 입니다!!!! 이런 코드가 있으면 좋을 것 같다는 의견!! 입니다!
-# TODO: ScheduleContextRepo 의존성 주입 (일정 맥락 조회 구현 후 활성화)
-# def get_schedule_context_repo(client: Neo4jClientDep) -> ScheduleContextRepo:
-#     from app.graph.repositories.schedule_context_repo import ScheduleContextRepo
-#
-#     return ScheduleContextRepo(client.driver)
-#
-# ScheduleContextRepoDep = Annotated[ScheduleContextRepo, Depends(get_schedule_context_repo)]
-
-
-# TODO: ParserService 의존성 주입 (C101/C102 자연어 일정 1차 파싱 구현 후 활성화)
-# def get_parser_service() -> ParserService:
-#     from app.services.parser_service import ParserService
-#
-#     return ParserService()
-#
-# ParserServiceDep = Annotated[ParserService, Depends(get_parser_service)]
-
-
-# TODO: ScheduleContextService 의존성 주입 (Neo4j 맥락 분석 구현 후 활성화)
-# def get_schedule_context_service(
-#     repo: ScheduleContextRepoDep,
-# ) -> ScheduleContextService:
-#     from app.services.schedule_context_service import ScheduleContextService
-#
-#     return ScheduleContextService(repo=repo)
-#
-# ScheduleContextServiceDep = Annotated[ScheduleContextService, Depends(get_schedule_context_service)]
-
-
-# TODO: RecommendationService 의존성 주입 (parser → graph → llm → recommender 파이프라인 구현 후 활성화)
-# def get_recommendation_service(
-#     parser_service: ParserServiceDep,
-#     recommendation_repo: RecommendationRepoDep,
-# ) -> RecommendationService:
-#     from app.services.recommendation_service import RecommendationService
-#
-#     return RecommendationService(
-#         parser_service=parser_service,
-#         recommendation_repo=recommendation_repo,
-#     )
-#
-# RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
-
-
-# TODO: LLMService 의존성 주입 (Upstage LLM 연동 구현 후 활성화)
-# def get_llm_service() -> LLMService:
-#     from app.services.llm_service import LLMService
-#
-#     return LLMService()
-#
-# LLMServiceDep = Annotated[LLMService, Depends(get_llm_service)]
