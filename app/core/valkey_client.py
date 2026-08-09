@@ -10,7 +10,7 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 VALKEY_DB = 0
-VALKEY_TIMEOUT_SECONDS = 2
+VALKEY_TIMEOUT_SECONDS = 5
 VALKEY_SSL_CA_CERTS = "/etc/ssl/certs/ca-certificates.crt"
 
 
