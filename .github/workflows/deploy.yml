@@ -146,10 +146,10 @@ jobs:
             UPSTAGE_CHAT_MODEL=solar-pro3
             UPSTAGE_CHAT_TIMEOUT_SECONDS=20
             D102_EMBEDDING_DIMENSION=4096
-            D102_EVENT_TYPE_MIN_SCORE=0.6
-            D102_CONTEXT_MIN_SCORE=0.6
-            D102_PLACE_TYPE_MIN_SCORE=0.6
-            D102_RECOMMENDATION_MIN_SCORE=0.6
+            D102_EVENT_TYPE_MIN_SCORE=0.61
+            D102_CONTEXT_MIN_SCORE=0.63
+            D102_PLACE_TYPE_MIN_SCORE=0.63
+            D102_RECOMMENDATION_MIN_SCORE=0.62
 
       # 새 이미지로 Task Definition 갱신 (Nginx 사이드카 컨테이너)
       # NGINX_CONTAINER_NAME은 ECS 작업 정의에 미리 등록되어 있어야 한다.
