@@ -6,14 +6,19 @@ from fastapi.responses import PlainTextResponse
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.handlers import register_exception_handlers
+from app.core.valkey_client import valkey_client
 from app.graph.neo4j_client import neo4j_client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     neo4j_client.connect()
-    yield
-    neo4j_client.close()
+    valkey_client.connect()
+    try:
+        yield
+    finally:
+        valkey_client.close()
+        neo4j_client.close()
 
 
 app = FastAPI(

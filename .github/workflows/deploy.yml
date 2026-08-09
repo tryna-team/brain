@@ -137,6 +137,9 @@ jobs:
             NEO4J_USERNAME=${{ secrets.NEO4J_USERNAME }}
             NEO4J_PASSWORD=${{ secrets.NEO4J_PASSWORD }}
             NEO4J_DATABASE=${{ secrets.NEO4J_DATABASE }}
+            VALKEY_HOST=${{ secrets.VALKEY_HOST }}
+            VALKEY_PORT=${{ secrets.VALKEY_PORT }}
+            VALKEY_PASSWORD=${{ secrets.VALKEY_PASSWORD }}
             UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}
             UPSTAGE_API_KEY_MULTI=${{ secrets.UPSTAGE_API_KEY_MULTI }}
             INTERNAL_API_KEY=${{ secrets.INTERNAL_API_KEY }}

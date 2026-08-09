@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class HealthStatus(str, Enum):
     UP = "UP"
     DOWN = "DOWN"
+    DISABLED = "DISABLED"
 
 
 class ComponentHealth(BaseModel):
@@ -21,9 +22,14 @@ class ComponentHealth(BaseModel):
     def down(cls, detail: str) -> "ComponentHealth":
         return cls(status=HealthStatus.DOWN, detail=detail)
 
+    @classmethod
+    def disabled(cls) -> "ComponentHealth":
+        return cls(status=HealthStatus.DISABLED, detail=None)
+
 
 class HealthComponents(BaseModel):
     neo4j: ComponentHealth
+    redis: ComponentHealth
 
 
 class HealthResponse(BaseModel):
@@ -32,11 +38,15 @@ class HealthResponse(BaseModel):
     components: HealthComponents
 
     @classmethod
-    def of(cls, neo4j: ComponentHealth) -> "HealthResponse":
+    def of(
+        cls,
+        neo4j: ComponentHealth,
+        redis: ComponentHealth,
+    ) -> "HealthResponse":
         return cls(
             status=neo4j.status,
             timestamp=datetime.now(timezone.utc),
-            components=HealthComponents(neo4j=neo4j),
+            components=HealthComponents(neo4j=neo4j, redis=redis),
         )
 
     def is_up(self) -> bool:
