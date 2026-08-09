@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     neo4j_password: str | None = None
     neo4j_database: str | None = None
 
+    valkey_host: str | None = None
+    valkey_port: int = Field(default=6379, ge=1, le=65535)
+    valkey_password: str | None = None
+
     upstage_api_key: str | None = None
     upstage_api_key_multi: str | None = None
     upstage_query_embedding_model: str = "solar-embedding-1-large-query"
