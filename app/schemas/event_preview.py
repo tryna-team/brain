@@ -1,4 +1,4 @@
-from datetime import date
+﻿from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -9,6 +9,7 @@ class EventPreviewRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     event_title: str = Field(alias="eventTitle")
+    draft_revision: int = Field(alias="draftRevision", ge=0)
     selected_date: date | None = Field(default=None, alias="selectedDate")
 
 
@@ -21,6 +22,7 @@ class EventPreviewResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     event_title: str = Field(alias="eventTitle")
+    draft_revision: int = Field(alias="draftRevision")
     start_date: str | None = Field(default=None, alias="startDate")
     date_source: DateSource | None = Field(default=None, alias="dateSource")
     end_date: str | None = Field(default=None, alias="endDate")
@@ -31,3 +33,5 @@ class EventPreviewResponse(BaseModel):
     is_all_day_candidate: bool = Field(alias="isAllDayCandidate")
     needs_confirmation: bool = Field(alias="needsConfirmation")
     warnings: list[EventPreviewWarning] = Field(default_factory=list)
+
+
