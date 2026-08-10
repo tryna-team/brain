@@ -1,12 +1,14 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import pytest
+
 from app.schemas.event_preview import EventPreviewRequest
 from app.services.event_preview_service import preview_event
 
 
 def test_preview_event_returns_start_date_and_start_time_with_seconds():
-    result = preview_event(EventPreviewRequest(eventTitle="금요일 3시 팀플 회의"))
+    result = preview_event(EventPreviewRequest(draftRevision=1, eventTitle="금요일 3시 팀플 회의"))
 
     assert result.event_title == "금요일 3시 팀플 회의"
     assert result.start_date is not None
@@ -18,9 +20,19 @@ def test_preview_event_returns_start_date_and_start_time_with_seconds():
     assert result.to_embedding == ["팀플", "회의"]
     assert result.is_all_day_candidate is False
 
+def test_event_preview_request_accepts_zero_draft_revision():
+    request = EventPreviewRequest(draftRevision=0, eventTitle="팀플 회의")
+
+    assert request.draft_revision == 0
+
+
+def test_event_preview_request_rejects_negative_draft_revision():
+    with pytest.raises(ValueError):
+        EventPreviewRequest(draftRevision=-1, eventTitle="팀플 회의")
+
 
 def test_preview_event_keeps_ambiguous_time_out_of_start_time():
-    result = preview_event(EventPreviewRequest(eventTitle="내일 오후에 팀플 회의"))
+    result = preview_event(EventPreviewRequest(draftRevision=1, eventTitle="내일 오후에 팀플 회의"))
 
     assert result.start_date is not None
     assert result.start_time is None
@@ -30,7 +42,7 @@ def test_preview_event_keeps_ambiguous_time_out_of_start_time():
 
 
 def test_preview_event_defaults_missing_date_to_today():
-    result = preview_event(EventPreviewRequest(eventTitle="팀플 회의"))
+    result = preview_event(EventPreviewRequest(draftRevision=1, eventTitle="팀플 회의"))
 
     assert result.start_date == datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
     assert result.date_source == "DEFAULT_TODAY"
@@ -42,6 +54,7 @@ def test_preview_event_uses_selected_date_when_source_has_no_date():
     result = preview_event(
         EventPreviewRequest(
             eventTitle="팀플 회의",
+            draftRevision=7,
             selectedDate="2026-08-10",
         )
     )
@@ -57,6 +70,7 @@ def test_preview_event_source_date_has_priority_over_selected_date():
     result = preview_event(
         EventPreviewRequest(
             eventTitle="2026년 8월 22일 부산 전시회",
+            draftRevision=8,
             selectedDate="2026-08-10",
         )
     )
@@ -67,7 +81,7 @@ def test_preview_event_source_date_has_priority_over_selected_date():
 
 
 def test_preview_event_returns_explicit_date_source_for_absolute_date():
-    result = preview_event(EventPreviewRequest(eventTitle="2026년 8월 22일 부산 전시회"))
+    result = preview_event(EventPreviewRequest(draftRevision=1, eventTitle="2026년 8월 22일 부산 전시회"))
     payload = result.model_dump(by_alias=True)
 
     assert result.start_date == "2026-08-22"
@@ -75,9 +89,11 @@ def test_preview_event_returns_explicit_date_source_for_absolute_date():
     assert payload["dateSource"] == "EXPLICIT"
 
 def test_preview_event_response_keeps_camel_case_json_contract():
-    result = preview_event(EventPreviewRequest(eventTitle="금요일 3시 팀플 회의"))
+    result = preview_event(EventPreviewRequest(draftRevision=1, eventTitle="금요일 3시 팀플 회의"))
     payload = result.model_dump(by_alias=True)
 
+    assert result.draft_revision == 1
+    assert payload["draftRevision"] == 1
     assert payload["eventTitle"] == "금요일 3시 팀플 회의"
     assert payload["startDate"] is not None
     assert payload["dateSource"] == "RELATIVE_EXPRESSION"
@@ -86,3 +102,4 @@ def test_preview_event_response_keeps_camel_case_json_contract():
     assert payload["toEmbedding"] == ["팀플", "회의"]
     assert payload["isAllDayCandidate"] is False
     assert payload["needsConfirmation"] is False
+

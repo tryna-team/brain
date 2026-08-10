@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from app.core.error_code import ErrorCode
@@ -30,6 +30,7 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
 
     return EventPreviewResponse(
         event_title=parsed_event.source_text,
+        draft_revision=request.draft_revision,
         start_date=start_date,
         date_source=date_source,
         end_date=parsed_event.end_date,
@@ -82,3 +83,5 @@ def _format_time_with_seconds(time_candidate: str | None) -> str | None:
         return f"{hour.zfill(2)}:{minute.zfill(2)}:{second.zfill(2)}"
 
     return None
+
+
