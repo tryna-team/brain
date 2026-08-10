@@ -1,5 +1,7 @@
-﻿from datetime import datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
+
+import pytest
 
 from app.schemas.event_preview import EventPreviewRequest
 from app.services.event_preview_service import preview_event
@@ -17,6 +19,16 @@ def test_preview_event_returns_start_date_and_start_time_with_seconds():
     assert result.place_candidate is None
     assert result.to_embedding == ["팀플", "회의"]
     assert result.is_all_day_candidate is False
+
+def test_event_preview_request_accepts_zero_draft_revision():
+    request = EventPreviewRequest(draftRevision=0, eventTitle="팀플 회의")
+
+    assert request.draft_revision == 0
+
+
+def test_event_preview_request_rejects_negative_draft_revision():
+    with pytest.raises(ValueError):
+        EventPreviewRequest(draftRevision=-1, eventTitle="팀플 회의")
 
 
 def test_preview_event_keeps_ambiguous_time_out_of_start_time():
