@@ -109,6 +109,22 @@ def test_weekday_date_range_rolls_end_forward_when_start_moves_to_next_week(monk
     assert result.to_embedding == ["제주도", "여행"]
 
 
+def test_qualified_this_week_end_does_not_roll_to_next_week(monkeypatch):
+    import app.services.parser_service as parser_service
+
+    monkeypatch.setattr(
+        parser_service,
+        "_today_in_service_timezone",
+        lambda: date(2026, 8, 11),
+    )
+
+    result = parser_service.parse_event_text("월요일부터 이번주 금요일까지 제주도 여행")
+
+    assert result.start_date == "2026-08-10"
+    assert result.end_date == "2026-08-14"
+    assert result.date_source == "RELATIVE_EXPRESSION"
+    assert result.to_embedding == ["제주도", "여행"]
+
 def test_dates_without_range_connector_do_not_set_end_date():
     result = parse_event_text("8월 22일 8월 24일 부산 여행")
 
