@@ -22,7 +22,7 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
     if not event_title:
         raise BusinessException(ErrorCode.COMMON_400)
 
-    parsed_event = parse_event_text(event_title)
+    parsed_event = parse_event_text(event_title, reference_date=request.selected_date)
     warnings = _build_warnings(parsed_event)
     selected_date = request.selected_date.isoformat() if request.selected_date else None
     start_date = parsed_event.start_date or selected_date or datetime.now(ASIA_SEOUL).date().isoformat()

@@ -131,3 +131,20 @@ def test_preview_event_response_keeps_camel_case_json_contract():
     assert payload["toEmbedding"] == ["팀플", "회의"]
     assert payload["isAllDayCandidate"] is False
     assert payload["needsConfirmation"] is False
+
+
+def test_preview_event_uses_selected_date_as_weekday_reference():
+    result = preview_event(
+        EventPreviewRequest(
+            eventTitle="월요일부터 금요일까지 제주도 여행",
+            draftRevision=9,
+            selectedDate="2026-08-11",
+        )
+    )
+    payload = result.model_dump(by_alias=True)
+
+    assert result.start_date == "2026-08-17"
+    assert result.end_date == "2026-08-21"
+    assert result.date_source == "RELATIVE_EXPRESSION"
+    assert payload["startDate"] == "2026-08-17"
+    assert payload["endDate"] == "2026-08-21"
