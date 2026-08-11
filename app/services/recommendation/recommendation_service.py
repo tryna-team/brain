@@ -12,6 +12,7 @@ from app.schemas.recommendation.refinement import RecommendationRefinementResult
 from app.schemas.recommendation.temporal import TemporalValidationResult
 from app.services.recommendation.temporal_validation_service import TemporalValidationService
 from app.services.recommendation.suggestion_compose_service import SuggestionCompositionService
+from app.services.recommendation.revision_guard_service import RevisionGuardService
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -24,13 +25,21 @@ class RecommendationService:
         candidate_search_service: CandidateSearchService,
         refinement_service: RecommendationRefinementService,
         temporal_validation_service: TemporalValidationService,
-        suggestion_compose_service: SuggestionCompositionService
+        suggestion_compose_service: SuggestionCompositionService,
+        revision_guard_service: RevisionGuardService,
     ) -> None:
         self.schedule_context_service = schedule_context_service
         self.candidate_search_service = candidate_search_service
         self.refinement_service = refinement_service
         self.temporal_validation_service = temporal_validation_service
         self.suggestion_compose_service = suggestion_compose_service
+        self.revision_guard_service = revision_guard_service
+
+    def _ensure_current_revision(self, request: RecommendationRequest) -> None:
+        self.revision_guard_service.ensure_current(
+            temp_event_id=request.temp_event_id,
+            draft_revision=request.draft_revision,
+        )
 
     def run_pipeline(
         self,
@@ -76,8 +85,11 @@ class RecommendationService:
         | TemporalValidationResult
         | RecommendationResponse
     ):
+        self._ensure_current_revision(request)
+
         # D101: 일정 맥락 구조화
         context = self.schedule_context_service.structure_context(request)
+        self._ensure_current_revision(request)
 
         if stop_after_step == PipelineStep.CONTEXT:
             return context
@@ -96,6 +108,7 @@ class RecommendationService:
 
         # D102: Neo4j 추천 후보 조회
         candidate = self.candidate_search_service.search(context)
+        self._ensure_current_revision(request)
 
         if stop_after_step == PipelineStep.CANDIDATES:
             return candidate
@@ -120,6 +133,7 @@ class RecommendationService:
             request=request,
             candidate_result=candidate,
         )
+        self._ensure_current_revision(request)
 
         if stop_after_step == PipelineStep.REFINED_ITEMS:
             return refined_result
@@ -142,6 +156,7 @@ class RecommendationService:
         temporal_result = self.temporal_validation_service.temporal_validate(
             refinement_result=refined_result,
         )
+        self._ensure_current_revision(request)
 
         if stop_after_step == PipelineStep.VALIDATED_ITEMS:
             return temporal_result
@@ -151,6 +166,7 @@ class RecommendationService:
         recommendation_result = self.suggestion_compose_service.compose(
             temporal_result=temporal_result
         )
+        self._ensure_current_revision(request)
 
         if stop_after_step is not None:
             raise NotImplementedError(

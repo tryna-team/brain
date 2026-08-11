@@ -8,7 +8,9 @@ from app.schemas.types import DateSource
 class EventPreviewRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
+    temp_event_id: str | None = Field(default=None, alias="tempEventId")
     event_title: str = Field(alias="eventTitle")
+    draft_revision: int = Field(alias="draftRevision", ge=0)
     selected_date: date | None = Field(default=None, alias="selectedDate")
 
 
@@ -20,7 +22,9 @@ class EventPreviewWarning(BaseModel):
 class EventPreviewResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
+    temp_event_id: str = Field(alias="tempEventId")
     event_title: str = Field(alias="eventTitle")
+    draft_revision: int = Field(alias="draftRevision")
     start_date: str | None = Field(default=None, alias="startDate")
     date_source: DateSource | None = Field(default=None, alias="dateSource")
     end_date: str | None = Field(default=None, alias="endDate")
