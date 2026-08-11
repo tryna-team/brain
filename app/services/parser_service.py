@@ -128,11 +128,11 @@ def _today_in_service_timezone() -> date:
     return datetime.now(SERVICE_TIMEZONE).date()
 
 
-def parse_event_text(source_text: str) -> ParsedEvent:
+def parse_event_text(source_text: str, reference_date: date | None = None) -> ParsedEvent:
     """사용자 원문을 날짜/시간/장소 후보와 임베딩 키워드로 변환합니다."""
     normalized_text = _normalize_spaces(source_text)
 
-    extracted_date = _extract_date(normalized_text)
+    extracted_date = _extract_date(normalized_text, reference_date=reference_date)
     extracted_time = _extract_time(normalized_text)
     extracted_place = _extract_place(
         source_text=normalized_text,
@@ -164,9 +164,9 @@ def parse_event_text(source_text: str) -> ParsedEvent:
     )
 
 
-def _extract_date(source_text: str) -> ExtractedValue:
+def _extract_date(source_text: str, reference_date: date | None = None) -> ExtractedValue:
     """절대 날짜, 상대 날짜, 요일 표현 중 원문에서 가장 먼저 나온 날짜 후보를 반환합니다."""
-    today = _today_in_service_timezone()
+    today = reference_date or _today_in_service_timezone()
     candidates: list[tuple[int, int, ExtractedValue]] = []
     removable_texts: list[str] = []
 
@@ -380,6 +380,7 @@ def _extract_date_range(
             if not _is_date_range_connector(between, until_match):
                 continue
 
+            end_date = _roll_weekday_range_end_forward(start_date, end_date)
             if _is_inverted_date_range(start_date, end_date):
                 continue
 
@@ -396,6 +397,40 @@ def _extract_date_range(
             )
 
     return ExtractedValue(value=None)
+
+
+def _roll_weekday_range_end_forward(start_date: ExtractedValue, end_date: ExtractedValue) -> ExtractedValue:
+    """요일 범위의 종료 요일이 시작일보다 앞서면 시작일 이후의 같은 요일로 보정합니다."""
+    if not start_date.value or not end_date.value or not end_date.text:
+        return end_date
+
+    weekday = _weekday_from_bare_text(end_date.text)
+    if weekday is None:
+        return end_date
+
+    start = date.fromisoformat(start_date.value)
+    end = date.fromisoformat(end_date.value)
+    if end >= start:
+        return end_date
+
+    rolled_end = _next_weekday(start + timedelta(days=1), weekday)
+    return ExtractedValue(
+        value=rolled_end.isoformat(),
+        text=end_date.text,
+        removable_texts=end_date.removable_texts,
+        date_source=end_date.date_source,
+        is_past=end_date.is_past,
+        is_ambiguous=end_date.is_ambiguous,
+    )
+
+
+def _weekday_from_bare_text(text: str) -> int | None:
+    """'금요일' 또는 '금요일에'처럼 주차 수식어가 없는 요일 표현만 요일 번호로 변환합니다."""
+    normalized_text = text.strip()
+    if normalized_text.endswith("에"):
+        normalized_text = normalized_text[:-1]
+
+    return WEEKDAY_INDEX.get(normalized_text)
 
 
 def _is_date_range_connector(between: str, until_match: re.Match[str] | None) -> bool:
