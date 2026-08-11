@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from app.core.error_code import ErrorCode
@@ -29,6 +30,7 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
     start_time = _format_time_with_seconds(parsed_event.start_time)
 
     return EventPreviewResponse(
+        temp_event_id=_resolve_temp_event_id(request.temp_event_id),
         event_title=parsed_event.source_text,
         draft_revision=request.draft_revision,
         start_date=start_date,
@@ -42,6 +44,13 @@ def preview_event(request: EventPreviewRequest) -> EventPreviewResponse:
         needs_confirmation=bool(warnings),
         warnings=warnings,
     )
+
+
+def _resolve_temp_event_id(temp_event_id: str | None) -> str:
+    if temp_event_id and temp_event_id.strip():
+        return temp_event_id.strip()
+
+    return f"tmp_{uuid4()}"
 
 
 def _build_warnings(parsed_event: ParsedEvent) -> list[EventPreviewWarning]:
