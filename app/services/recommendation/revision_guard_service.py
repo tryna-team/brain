@@ -9,7 +9,7 @@ from app.core.valkey_client import ValkeyClient
 
 logger = logging.getLogger("uvicorn.error")
 
-LATEST_REVISION_KEY_PREFIX = "tryna:recommendation:latest-revision"
+LATEST_REVISION_KEY_PREFIX = "recommendation:latest-revision"
 
 
 class RevisionGuardService:
