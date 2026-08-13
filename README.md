@@ -266,6 +266,117 @@ http://127.0.0.1:8000/docs
 
 ---
 
+## 🔗 API 사용 및 연동 흐름
+
+클라이언트는 brain API를 직접 호출하지 않습니다. Spring 서버가 사용자 인증과 요청 검증을 수행한 뒤 `X-Internal-Api-Key`를 포함해 brain API를 호출합니다.
+
+### 1. 최초 일정 미리보기 요청
+
+새로운 일정 작성을 시작할 때 `tempEventId`는 JSON `null`로 전달하거나 필드를 생략합니다. 문자열 `"null"`을 전달하면 실제 임시 일정 ID로 취급되므로 사용하지 않습니다.
+
+```json
+{
+  "tempEventId": null,
+  "eventTitle": "다음주 금요일 3시부터 4시까지 회의",
+  "draftRevision": 0,
+  "selectedDate": "2026-08-13"
+}
+```
+
+brain은 최초 요청에 새로운 `tempEventId`를 생성하고 요청의 `draftRevision`을 그대로 반환합니다.
+
+```json
+{
+  "tempEventId": "tmp_f7258568-0374-4710-8473-329576255448",
+  "eventTitle": "다음주 금요일 3시부터 4시까지 회의",
+  "draftRevision": 0,
+  "startDate": "2026-08-21",
+  "dateSource": "RELATIVE_EXPRESSION",
+  "endDate": null,
+  "startTime": "15:00:00",
+  "endTime": "16:00:00",
+  "placeCandidate": null,
+  "toEmbedding": ["회의"],
+  "isAllDayCandidate": false,
+  "needsConfirmation": false,
+  "warnings": []
+}
+```
+
+### 2. 입력 수정 요청
+
+같은 일정을 작성하는 동안에는 이전 응답의 `tempEventId`를 그대로 전달하고, 호출하는 쪽에서 `draftRevision`을 증가시킵니다. brain은 `draftRevision`을 자동으로 증가시키지 않습니다.
+
+```json
+{
+  "tempEventId": "tmp_f7258568-0374-4710-8473-329576255448",
+  "eventTitle": "다음주 금요일 4시부터 5시까지 회의",
+  "draftRevision": 1,
+  "selectedDate": "2026-08-13"
+}
+```
+
+- 동일한 일정 작성 과정에서는 같은 `tempEventId`를 유지합니다.
+- 일정 저장, 작성 취소 또는 새로운 일정 작성을 시작하면 호출하는 쪽에서 기존 `tempEventId`를 초기화합니다.
+- brain은 임시 일정의 저장·취소 상태를 보관하지 않습니다.
+- 추천 파이프라인은 `tempEventId`별 최신 `draftRevision`을 기준으로 오래된 요청의 후속 단계를 중단합니다.
+
+### 3. 날짜 결정 우선순위
+
+일정 시작 날짜는 다음 순서로 결정합니다.
+
+1. 일정 원문에서 파싱한 날짜
+2. 요청으로 전달된 `selectedDate`
+3. Asia/Seoul 기준 오늘
+
+`dateSource`는 날짜가 결정된 출처를 나타냅니다.
+
+| Value | Description |
+| --- | --- |
+| `EXPLICIT` | 사용자가 절대 날짜를 직접 입력 |
+| `RELATIVE_EXPRESSION` | 내일, 다음 주 금요일 등의 상대 날짜 표현을 파싱 |
+| `SELECTED_DATE` | 원문에 날짜가 없어 요청의 `selectedDate` 사용 |
+| `DEFAULT_TODAY` | 원문과 요청에 날짜가 없어 Asia/Seoul 기준 오늘 사용 |
+
+### 4. 일정 미리보기 결과를 추천 요청으로 변환
+
+일정 미리보기 응답과 추천 요청은 필드 이름이 일부 다르므로 Spring 서버에서 다음과 같이 변환합니다.
+
+| Event Preview Response | Recommendation Request |
+| --- | --- |
+| `startDate` | `startDateCandidate` |
+| `startTime` | `startTimeCandidate` |
+| `endDate` | `endDateCandidate` |
+| `endTime` | `endTimeCandidate` |
+| `dateSource` | `startDateSource` |
+| `toEmbedding` | `embeddingWords` |
+
+추천 요청에는 일정 입력 출처를 나타내는 `sourceType`도 포함해야 합니다.
+
+```json
+{
+  "tempEventId": "tmp_f7258568-0374-4710-8473-329576255448",
+  "draftRevision": 1,
+  "eventTitle": "다음주 금요일 4시부터 5시까지 회의",
+  "sourceType": "USER_NATURAL_LANGUAGE",
+  "startDateCandidate": "2026-08-21",
+  "startTimeCandidate": "16:00:00",
+  "endDateCandidate": null,
+  "endTimeCandidate": "17:00:00",
+  "startDateSource": "RELATIVE_EXPRESSION",
+  "placeCandidate": null,
+  "description": null,
+  "embeddingWords": ["회의"]
+}
+```
+
+| `sourceType` | Description |
+| --- | --- |
+| `USER_NATURAL_LANGUAGE` | 사용자가 자연어로 입력한 일정 |
+| `USER_MANUAL_EDIT` | 사용자가 미리보기 정보를 직접 수정한 일정 |
+
+---
+
 ## ✅ Health Check
 
 ```http
