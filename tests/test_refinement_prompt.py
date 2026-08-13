@@ -3,6 +3,7 @@ import json
 from app.services.recommendation.prompts.refinement_prompt import (
     FEW_SHOT_MESSAGES,
     FEW_SHOT_VERSION,
+    PROMPT_VERSION,
 )
 
 
@@ -41,8 +42,9 @@ def _few_shot_pairs() -> list[tuple[dict, dict]]:
     return pairs
 
 
-def test_few_shot_version_is_v2():
-    assert FEW_SHOT_VERSION == "d103_fewshot_v2"
+def test_prompt_versions_are_updated():
+    assert PROMPT_VERSION == "d103_prompt_v2"
+    assert FEW_SHOT_VERSION == "d103_fewshot_v3"
 
 
 def test_few_shot_messages_follow_selection_contract():
