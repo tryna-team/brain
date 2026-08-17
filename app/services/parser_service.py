@@ -30,6 +30,15 @@ DATE_PATTERNS = [
     re.compile(r"(?<![\d/.-])(?P<month>\d{1,2})/(?P<day>\d{1,2})(?![\d/.-])"),
 ]
 
+# 종료일의 월이 생략된 범위를 처리합니다: 8월 20일부터 22일까지, 20일 부터 22일까지.
+INHERITED_MONTH_DATE_RANGE_PATTERN = re.compile(
+    r"(?<!\d)"
+    r"(?:(?P<year>\d{4})년\s*)?"
+    r"(?:(?P<month>\d{1,2})월\s*)?"
+    r"(?P<start_day>\d{1,2})일\s*부터\s*"
+    r"(?P<end_day>\d{1,2})일\s*까지"
+)
+
 # 오전/오후, 반, 분, 쯤/경이 포함된 시간 표현을 처리합니다.
 TIME_PATTERN = re.compile(
     r"(?:(?P<period>오전|오후|저녁|아침|밤|새벽|점심|낮)(?:에)?\s*)?"
@@ -170,6 +179,10 @@ def _extract_date(source_text: str, reference_date: date | None = None) -> Extra
     today = reference_date or _today_in_service_timezone()
     candidates: list[tuple[int, int, ExtractedValue]] = []
     removable_texts: list[str] = []
+
+    inherited_month_range = _extract_inherited_month_date_range(source_text, today)
+    if inherited_month_range.value is not None:
+        return inherited_month_range
 
     for pattern in DATE_PATTERNS:
         for match in pattern.finditer(source_text):
@@ -322,6 +335,32 @@ def _extract_date(source_text: str, reference_date: date | None = None) -> Extra
         )
 
     return ExtractedValue(value=None)
+
+
+def _extract_inherited_month_date_range(source_text: str, today: date) -> ExtractedValue:
+    """생략된 월은 시작일의 월 또는 서비스 기준 현재 월로 보완해 날짜 범위를 반환합니다."""
+    match = INHERITED_MONTH_DATE_RANGE_PATTERN.search(source_text)
+    if match is None:
+        return ExtractedValue(value=None)
+
+    year = int(match.group("year") or today.year)
+    month = int(match.group("month") or today.month)
+
+    try:
+        start_date = date(year, month, int(match.group("start_day")))
+        end_date = date(year, month, int(match.group("end_day")))
+    except ValueError:
+        return ExtractedValue(value=None)
+
+    removable_text = match.group(0)
+    return ExtractedValue(
+        value=start_date.isoformat(),
+        end_value=end_date.isoformat() if end_date >= start_date else None,
+        text=removable_text,
+        removable_texts=[removable_text],
+        date_source="EXPLICIT",
+        is_past=start_date < today,
+    )
 
 
 def _add_relative_week_candidates_without_weekday(
