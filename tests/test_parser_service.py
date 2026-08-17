@@ -59,6 +59,62 @@ def test_explicit_date_range_sets_start_and_end_date():
     assert result.to_embedding == ["부산", "여행"]
 
 
+def test_date_range_inherits_start_month_when_end_month_is_omitted():
+    result = parse_event_text(
+        "8월 20일부터 22일까지 부산 여행",
+        reference_date=date(2026, 8, 17),
+    )
+
+    assert result.start_date == "2026-08-20"
+    assert result.end_date == "2026-08-22"
+    assert result.date_source == "EXPLICIT"
+    assert result.to_embedding == ["부산", "여행"]
+
+
+def test_date_range_uses_reference_month_when_both_months_are_omitted():
+    result = parse_event_text(
+        "20일 부터 22일까지 부산 여행",
+        reference_date=date(2026, 8, 17),
+    )
+
+    assert result.start_date == "2026-08-20"
+    assert result.end_date == "2026-08-22"
+    assert result.date_source == "EXPLICIT"
+    assert result.to_embedding == ["부산", "여행"]
+
+
+def test_inherited_month_date_range_does_not_roll_inverted_end_to_next_month():
+    result = parse_event_text(
+        "8월 30일부터 2일까지 부산 여행",
+        reference_date=date(2026, 8, 17),
+    )
+
+    assert result.start_date == "2026-08-30"
+    assert result.end_date is None
+    assert result.date_source == "EXPLICIT"
+    assert result.to_embedding == ["부산", "여행"]
+
+
+def test_date_range_selects_earliest_standard_range_before_inherited_range():
+    result = parse_event_text(
+        "8월 18일부터 8월 19일까지 출장 후 8월 20일부터 22일까지 여행",
+        reference_date=date(2026, 8, 17),
+    )
+
+    assert result.start_date == "2026-08-18"
+    assert result.end_date == "2026-08-19"
+
+
+def test_date_range_selects_earliest_inherited_range_before_standard_range():
+    result = parse_event_text(
+        "8월 20일부터 22일까지 여행 후 8월 24일부터 8월 25일까지 출장",
+        reference_date=date(2026, 8, 17),
+    )
+
+    assert result.start_date == "2026-08-20"
+    assert result.end_date == "2026-08-22"
+
+
 def test_relative_date_range_sets_start_and_end_date(monkeypatch):
     import app.services.parser_service as parser_service
 
