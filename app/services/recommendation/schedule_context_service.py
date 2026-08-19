@@ -24,11 +24,14 @@ class ScheduleContextService:
         self,
         request: RecommendationRequest,
     ) -> str:
-        event_title = " ".join(
-            request.event_title.split()
+        event_title = " ".join(request.event_title.split())
+        embedding_words = " ".join(
+            " ".join(word.split())
+            for word in request.embedding_words
+            if word.strip()
         )
 
-        parts = [event_title]
+        parts = [embedding_words or event_title]
 
         def append_if_not_duplicated(
             value: str,
@@ -45,9 +48,6 @@ class ScheduleContextService:
                 return
 
             parts.append(f"{prefix}{normalized_value}")
-
-        for word in request.embedding_words:
-            append_if_not_duplicated(word)
 
         if request.place_candidate:
             append_if_not_duplicated(
@@ -112,7 +112,7 @@ class ScheduleContextService:
                 draftRevision=request.draft_revision,
                 queryEmbedding=None,
                 embeddingStatus="ERROR",
-                semanticInputVersion="v1",
+                semanticInputVersion="v2",
                 scheduleContext=schedule_context,
                 embeddingMeta=None,
                 errorCode=exc.error_code.name,
@@ -124,7 +124,7 @@ class ScheduleContextService:
             draftRevision=request.draft_revision,
             queryEmbedding=query_embedding,
             embeddingStatus="READY",
-            semanticInputVersion="v1",
+            semanticInputVersion="v2",
             scheduleContext=schedule_context,
             embeddingMeta=EmbeddingMeta(
                 model=self.embedding_service.model,

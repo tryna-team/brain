@@ -42,7 +42,7 @@ class ScheduleContextResult(BaseModel):
     draft_revision: int = Field(alias="draftRevision")
     query_embedding: list[float] | None = Field(default=None, alias="queryEmbedding")
     embedding_status: EmbeddingStatus = Field(alias="embeddingStatus")
-    semantic_input_version: str = Field(default="v1", alias="semanticInputVersion")
+    semantic_input_version: str = Field(default="v2", alias="semanticInputVersion")
     schedule_context: ScheduleContext = Field(alias="scheduleContext")
     embedding_meta: EmbeddingMeta | None = Field(default=None, alias="embeddingMeta")
     error_code: str | None = Field(default=None, alias="errorCode")
