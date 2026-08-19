@@ -26,7 +26,7 @@ class ScheduleContextService:
     ) -> str:
         event_title = " ".join(request.event_title.split())
         embedding_words = " ".join(
-            word.strip()
+            " ".join(word.split())
             for word in request.embedding_words
             if word.strip()
         )
