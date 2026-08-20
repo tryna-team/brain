@@ -30,13 +30,13 @@ DATE_PATTERNS = [
     re.compile(r"(?<![\d/.-])(?P<month>\d{1,2})/(?P<day>\d{1,2})(?![\d/.-])"),
 ]
 
-# 종료일의 월이 생략된 범위를 처리합니다: 8월 20일부터 22일까지, 20일 부터 22일까지.
+# 종료일의 월이 생략된 범위를 처리합니다: 8월 20일부터 22일(까지), 20일 부터 22일(까지).
 INHERITED_MONTH_DATE_RANGE_PATTERN = re.compile(
     r"(?<!\d)"
     r"(?:(?P<year>\d{4})년\s*)?"
     r"(?:(?P<month>\d{1,2})월\s*)?"
     r"(?P<start_day>\d{1,2})일\s*부터\s*"
-    r"(?P<end_day>\d{1,2})일\s*까지"
+    r"(?P<end_day>\d{1,2})일(?:\s*까지)?"
 )
 
 # 오전/오후, 반, 분, 쯤/경이 포함된 시간 표현을 처리합니다.
@@ -455,7 +455,8 @@ def _extract_date_range(
             if _is_inverted_date_range(start_date, end_date):
                 continue
 
-            removable_text = source_text[start_index : end_end + until_match.end()]
+            until_end = until_match.end() if until_match else 0
+            removable_text = source_text[start_index : end_end + until_end]
             removable_texts.append(removable_text)
             return (
                 start_index,
@@ -549,10 +550,11 @@ def _weekday_from_bare_text(text: str) -> int | None:
 
 def _is_date_range_connector(between: str, until_match: re.Match[str] | None) -> bool:
     """두 날짜 후보 사이가 범위 연결 표현인지 확인합니다."""
+    connector = between.strip()
     if not until_match:
-        return False
+        return connector == "부터"
 
-    return between.strip() in {"부터", "에서", "~", "-"}
+    return connector in {"부터", "에서", "~", "-"}
 
 def _is_inverted_date_range(start_date: ExtractedValue, end_date: ExtractedValue) -> bool:
     """종료일이 시작일보다 앞서는 뒤집힌 날짜 범위인지 확인합니다."""

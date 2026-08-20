@@ -71,6 +71,30 @@ def test_date_range_inherits_start_month_when_end_month_is_omitted():
     assert result.to_embedding == ["부산", "여행"]
 
 
+def test_date_range_allows_omitted_until_particle_after_from_particle():
+    result = parse_event_text(
+        "8월 21일부터 22일 부산 여행",
+        reference_date=date(2026, 8, 20),
+    )
+
+    assert result.start_date == "2026-08-21"
+    assert result.end_date == "2026-08-22"
+    assert result.date_source == "EXPLICIT"
+    assert result.to_embedding == ["부산", "여행"]
+
+
+def test_date_range_uses_reference_month_when_until_particle_is_omitted():
+    result = parse_event_text(
+        "21일부터 22일 부산 여행",
+        reference_date=date(2026, 8, 20),
+    )
+
+    assert result.start_date == "2026-08-21"
+    assert result.end_date == "2026-08-22"
+    assert result.date_source == "EXPLICIT"
+    assert result.to_embedding == ["부산", "여행"]
+
+
 def test_date_range_uses_reference_month_when_both_months_are_omitted():
     result = parse_event_text(
         "20일 부터 22일까지 부산 여행",
@@ -188,6 +212,13 @@ def test_dates_without_range_connector_do_not_set_end_date():
     assert result.end_date is None
     assert result.date_source == "EXPLICIT"
     assert result.to_embedding == ["부산", "여행"]
+
+
+def test_comma_separated_dates_are_not_parsed_as_a_range():
+    result = parse_event_text("8월 21일, 22일 부산 여행", reference_date=date(2026, 8, 20))
+
+    assert result.start_date == "2026-08-21"
+    assert result.end_date is None
 
 
 def test_mixed_explicit_and_weekday_range_uses_relative_date_source(monkeypatch):
