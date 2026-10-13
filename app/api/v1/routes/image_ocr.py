@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
-from app.services.image_ocr_service import image_ocr_service
+from app.services.ocr.image_ocr_service import image_ocr_service
 
 
 router = APIRouter(prefix="/images")
