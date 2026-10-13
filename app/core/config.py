@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     internal_api_key: str | None = None
 
+    # 로컬 OCR 개발 시 외부 서비스 연결 제어
+    skip_neo4j_connection: bool = False
+
     # TODO_INFRA: 임시적 허용 범위 (추후 제거 예정)
     # ALB -> Nginx가 "/ai" 접두사를 떼어내고 FastAPI로 넘기므로, Swagger/OpenAPI가
     # 외부에 노출된 실제 경로를 알 수 있도록 root_path로 되돌려준다. (prod에서만 "/ai")

@@ -12,13 +12,25 @@ from app.graph.neo4j_client import neo4j_client
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    neo4j_client.connect()
+
+    # 로컬 OCR 개발 환경에서만 Neo4j 연결 생략
+    skip_neo4j = (
+        settings.is_local
+        and settings.skip_neo4j_connection
+    )
+
+    if not skip_neo4j:
+        neo4j_client.connect()
+
     valkey_client.connect()
+
     try:
         yield
     finally:
         valkey_client.close()
-        neo4j_client.close()
+
+        if not skip_neo4j:
+            neo4j_client.close()
 
 
 app = FastAPI(
