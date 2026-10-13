@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
 from app.services.ocr.image_ocr_service import image_ocr_service
+from app.services.ocr.paddle_ocr_service import paddle_ocr_service
 
 
 router = APIRouter(prefix="/images")
@@ -41,7 +42,10 @@ async def extract_image_text(
 
     try:
         text = await run_in_threadpool(
-            image_ocr_service.extract_text,
+            # upstage OCR
+            # image_ocr_service.extract_text,
+            # paddle OCR
+            paddle_ocr_service.extract_text,
             image_bytes,
             image.filename or "image.png",
             image.content_type,
