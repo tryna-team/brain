@@ -1,3 +1,6 @@
+from io import BytesIO
+from PIL import Image, UnidentifiedImageError
+
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
@@ -38,6 +41,31 @@ async def extract_image_text(
         raise HTTPException(
             status_code=400,
             detail="이미지 파일이 비어 있습니다.",
+        )
+
+    # 실제 이미지 형식 및 크기 검증
+    try:
+        with Image.open(BytesIO(image_bytes)) as img:
+            if img.format not in {"JPEG", "PNG"}:
+                raise HTTPException(
+                    status_code=400,
+                    detail="유효한 JPG 또는 PNG 이미지가 아닙니다.",
+                )
+
+            width, height = img.size
+
+            if width > 5000 or height > 5000 or width * height > 20_000_000:
+                raise HTTPException(
+                    status_code=400,
+                    detail="이미지 크기가 너무 큽니다.",
+                )
+
+            img.verify()
+
+    except (UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail="이미지 파일을 읽을 수 없습니다.",
         )
 
     try:
