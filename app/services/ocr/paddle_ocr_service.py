@@ -1,9 +1,12 @@
+from threading import Lock
+
 import os
 import tempfile
 from functools import lru_cache
 
 from paddleocr import PaddleOCR
 
+ocr_lock = Lock()
 
 @lru_cache(maxsize=1)
 def get_paddle_ocr() -> PaddleOCR:
@@ -35,7 +38,8 @@ class PaddleOcrService:
                 path = temp_file.name
 
             # PaddleOCR 실행
-            results = get_paddle_ocr().predict(path)
+            with ocr_lock:
+                results = get_paddle_ocr().predict(path)
 
             # 인식된 텍스트 추출
             lines = []
