@@ -4,6 +4,7 @@ from app.api.v1.routes import (
     event_previews,
     health,
     recommendations,
+    image_ocr,
 )
 from app.core.internal_auth import verify_internal_api_key
 
@@ -15,4 +16,7 @@ protected_router = APIRouter(dependencies=[Depends(verify_internal_api_key)])
 protected_router.include_router(recommendations.router)
 
 protected_router.include_router(event_previews.router, tags=["Event Preview"])
+
+protected_router.include_router(image_ocr.router, tags=["Image OCR"])
+
 api_router.include_router(protected_router)
