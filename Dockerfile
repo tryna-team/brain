@@ -15,7 +15,10 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends tzdata ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && groupadd -r fastapi && useradd -r -g fastapi fastapi
+    && groupadd -r fastapi \
+    && useradd -r -g fastapi -m -d /home/fastapi fastapi \
+    && mkdir -p /home/fastapi/.paddlex \
+    && chown -R fastapi:fastapi /home/fastapi
 
 ENV TZ=Asia/Seoul
 ENV PYTHONDONTWRITEBYTECODE=1
