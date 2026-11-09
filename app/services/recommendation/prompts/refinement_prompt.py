@@ -1,6 +1,6 @@
 import json
 
-from app.schemas.recommendation.candidates import CandidateSearchResult
+from app.schemas.recommendation.v1.candidates import CandidateSearchResult
 
 
 PROMPT_VERSION = "d103_prompt_v2"

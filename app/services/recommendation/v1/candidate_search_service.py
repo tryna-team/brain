@@ -12,8 +12,8 @@ from app.graph.models.recommendation_candidate import (
     RecommendationCandidateRecord,
     SemanticCandidateRecord,
 )
-from app.schemas.recommendation.candidates import CandidateSearchResult
-from app.schemas.recommendation.schedule_context import ScheduleContextResult
+from app.schemas.recommendation.v1.candidates import CandidateSearchResult
+from app.schemas.recommendation.v1.schedule_context import ScheduleContextResult
 
 RECOMMENDATION_RELATION_LIMIT = 6
 RECOMMENDATION_VECTOR_LIMIT = 2

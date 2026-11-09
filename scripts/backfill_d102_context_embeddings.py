@@ -10,7 +10,7 @@ import argparse
 
 from app.core.config import settings
 from app.graph.neo4j_client import neo4j_client
-from app.services.recommendation.embedding_service import EmbeddingService
+from app.services.recommendation.v1.embedding_service import EmbeddingService
 
 
 def _parse_args() -> argparse.Namespace:

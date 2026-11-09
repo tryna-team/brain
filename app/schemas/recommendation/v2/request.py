@@ -1,24 +1,47 @@
 from datetime import date, time
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Literal
-from app.schemas.types import DateSource
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-SourceType = Literal["USER_NATURAL_LANGUAGE", "USER_MANUAL_EDIT"]
+from pydantic import Field, field_validator, model_validator
 
-# /api/v2/recommendations requestDTO
-class RecommendationRequestV2(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, str_strip_whitespace=True)
+from app.schemas.event_preview import EventPreviewResponse
+from app.schemas.recommendation.v2.base import ResponseModelV2
 
-    temp_event_id: str = Field(alias= "tempEventId", min_length=1)
-    draft_revision: int = Field(alias= "draftRevision", ge=0)
-    event_title: str = Field(alias= "eventTitle", min_length=1)
-    source_type: SourceType = Field(alias= "sourceType")
-    original_text: str | None = Field(default=None, alias="originalText")
-    start_date_candidate: date = Field(alias= "startDateCandidate")
-    start_time_candidate: time | None = Field(default= None, alias= "startTimeCandidate")
-    end_date_candidate: date | None = Field(default= None, alias= "endDateCandidate")
-    end_time_candidate: time | None = Field(default= None, alias= "endTimeCandidate")
-    start_date_source: DateSource | None = Field(default=None, alias="startDateSource")
-    place_candidate: str | None = Field(default= None, alias= "placeCandidate")
+
+def validate_timezone(value: str) -> str:
+    try:
+        ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise ValueError("timezone must be a valid IANA timezone.") from exc
+    return value
+
+
+class EventInputV2(ResponseModelV2):
+
+    title: str = Field(min_length=1)
+    start_date: date | None = Field(default=None, alias="startDate")
+    start_time: time | None = Field(default=None, alias="startTime")
+    end_date: date | None = Field(default=None, alias="endDate")
+    end_time: time | None = Field(default=None, alias="endTime")
+    is_all_day: bool = Field(alias="isAllDay")
+    timezone: str = Field(min_length=1)
+    place: str | None = None
     description: str | None = None
-    embedding_words: list[str] = Field(default_factory=list, alias="embeddingWords")
+
+    _validate_timezone = field_validator("timezone")(validate_timezone)
+
+
+class RecommendationRequestV2(ResponseModelV2):
+    request_id: str = Field(alias="requestId", min_length=1)
+    owner_id: str = Field(alias="ownerId", min_length=1)
+    temp_event_id: str | None = Field(default=None, alias="tempEventId", min_length=1)
+    event_id: str | None = Field(default=None, alias="eventId", min_length=1)
+    draft_revision: int = Field(alias="draftRevision", ge=0)
+    original_text: str | None = Field(default=None, alias="originalText")
+    event: EventInputV2
+    parsing_result: EventPreviewResponse = Field(alias="parsingResult")
+
+    @model_validator(mode="after")
+    def validate_event_identity(self):
+        if (self.temp_event_id is None) == (self.event_id is None):
+            raise ValueError("Exactly one of tempEventId and eventId is required.")
+        return self

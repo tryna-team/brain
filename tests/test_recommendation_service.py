@@ -4,7 +4,7 @@ import pytest
 
 from app.core.error_code import ErrorCode
 from app.core.exceptions import BusinessException
-from app.services.recommendation.recommendation_service import RecommendationService
+from app.services.recommendation.v1.recommendation_service import RecommendationService
 
 
 def _recommendation_service(revision_guard_service: Mock) -> RecommendationService:

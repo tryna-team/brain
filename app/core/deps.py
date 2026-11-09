@@ -6,15 +6,15 @@ from fastapi import Depends
 
 from app.graph.neo4j_client import Neo4jClient, neo4j_client
 from app.graph.repositories.recommendation_repo import RecommendationRepo
-from app.services.recommendation.embedding_service import EmbeddingService
-from app.services.recommendation.schedule_context_service import ScheduleContextService
-from app.services.recommendation.recommendation_service import RecommendationService
-from app.services.recommendation.candidate_search_service import CandidateSearchService
-from app.services.recommendation.refinement_llm_service import RefinementLLMService
-from app.services.recommendation.refinement_service import RecommendationRefinementService
-from app.services.recommendation.temporal_validation_service import TemporalValidationService
-from app.services.recommendation.suggestion_compose_service import SuggestionCompositionService
-from app.services.recommendation.revision_guard_service import RevisionGuardService
+from app.services.recommendation.v1.embedding_service import EmbeddingService
+from app.services.recommendation.v1.schedule_context_service import ScheduleContextService
+from app.services.recommendation.v1.recommendation_service import RecommendationService
+from app.services.recommendation.v1.candidate_search_service import CandidateSearchService
+from app.services.recommendation.v1.refinement_llm_service import RefinementLLMService
+from app.services.recommendation.v1.refinement_service import RecommendationRefinementService
+from app.services.recommendation.v1.temporal_validation_service import TemporalValidationService
+from app.services.recommendation.v1.suggestion_compose_service import SuggestionCompositionService
+from app.services.recommendation.v1.revision_guard_service import RevisionGuardService
 from app.core.valkey_client import valkey_client
 
 
