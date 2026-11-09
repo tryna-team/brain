@@ -4,12 +4,12 @@ from app.core.config import settings
 from app.core.error_code import ErrorCode
 from app.core.exceptions import BusinessException
 from app.core.deps import RecommendationServiceDep
-from app.schemas.recommendation.pipeline import PipelineStep
-from app.schemas.recommendation.recommendation import RecommendationRequest, RecommendationResponse
-from app.schemas.recommendation.schedule_context import ScheduleContextResult
-from app.schemas.recommendation.candidates import CandidateSearchResult
-from app.schemas.recommendation.refinement import RecommendationRefinementResult
-from app.schemas.recommendation.temporal import TemporalValidationResult
+from app.schemas.recommendation.v1.pipeline import PipelineStep
+from app.schemas.recommendation.v1.recommendation import RecommendationRequest, RecommendationResponse
+from app.schemas.recommendation.v1.schedule_context import ScheduleContextResult
+from app.schemas.recommendation.v1.candidates import CandidateSearchResult
+from app.schemas.recommendation.v1.refinement import RecommendationRefinementResult
+from app.schemas.recommendation.v1.temporal import TemporalValidationResult
 
 
 router = APIRouter(tags=["Recommendation"])

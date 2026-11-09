@@ -1,19 +1,19 @@
 import logging
 from pydantic import ValidationError
-from app.schemas.recommendation.candidates import CandidateSearchResult
-from app.schemas.recommendation.recommendation import RecommendationRequest
+from app.schemas.recommendation.v1.candidates import CandidateSearchResult
+from app.schemas.recommendation.v1.recommendation import RecommendationRequest
 from app.core.error_code import ErrorCode
 from app.services.recommendation.prompts.refinement_prompt import (
     FEW_SHOT_VERSION,
     PROMPT_VERSION,
     build_refinement_messages
 )
-from app.schemas.recommendation.refinement import (
+from app.schemas.recommendation.v1.refinement import (
     LLMRefinementResponse,
     RecommendationRefinementResult,
     RefinedRecommendationItem
 )
-from app.services.recommendation.refinement_llm_service import (
+from app.services.recommendation.v1.refinement_llm_service import (
     RefinementLLMError,
     RefinementLLMService,
 )

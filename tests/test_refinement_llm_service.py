@@ -5,7 +5,7 @@ import requests
 
 from app.core.upstage_key_pool import UpstageKeyPool
 from app.core.upstage_retry import upstage_retry
-from app.services.recommendation.refinement_llm_service import (
+from app.services.recommendation.v1.refinement_llm_service import (
     RefinementLLMError,
     RefinementLLMService,
 )

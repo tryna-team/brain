@@ -1,9 +1,9 @@
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.schemas.recommendation.refinement import RecommendationRefinementResult, RefinedRecommendationItem
-from app.schemas.recommendation.schedule_context import ScheduleContext
-from app.schemas.recommendation.temporal import TemporalRecommendationItem, TemporalValidationResult
+from app.schemas.recommendation.v1.refinement import RecommendationRefinementResult, RefinedRecommendationItem
+from app.schemas.recommendation.v1.schedule_context import ScheduleContext
+from app.schemas.recommendation.v1.temporal import TemporalRecommendationItem, TemporalValidationResult
 
 
 ASIA_SEOUL = ZoneInfo("Asia/Seoul")

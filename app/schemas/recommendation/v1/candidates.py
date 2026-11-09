@@ -1,7 +1,7 @@
 # neo4j를 통해 조회한 추천 항목 후보
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
-from app.schemas.recommendation.schedule_context import ScheduleContext
+from app.schemas.recommendation.v1.schedule_context import ScheduleContext
 
 MappingStatus = Literal["MATCHED", "UNMATCHED", "ERROR"]
 LookupStatus = Literal["SUCCESS", "NO_MAPPING", "NO_CANDIDATES", "PARTIAL_ERROR", "ERROR"]
