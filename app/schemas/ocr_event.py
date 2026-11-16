@@ -44,3 +44,8 @@ class OcrEventExtraction(BaseModel):
         default=None,
         description="일정 관련 추가 정보",
     )
+
+    registration_deadline: date | None = Field(
+        default=None,
+        description="접수 또는 사전 등록 마감일",
+    )
