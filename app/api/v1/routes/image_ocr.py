@@ -4,7 +4,7 @@ from PIL import Image, UnidentifiedImageError
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
-from app.services.ocr.image_ocr_service import image_ocr_service
+from app.services.ocr.event_extraction_service import extract_event_from_ocr
 from app.services.ocr.paddle_ocr_service import paddle_ocr_service
 
 
@@ -70,21 +70,11 @@ async def extract_image_text(
 
     try:
         text = await run_in_threadpool(
-            # upstage OCR
-            # image_ocr_service.extract_text,
-            # paddle OCR
             paddle_ocr_service.extract_text,
             image_bytes,
             image.filename or "image.png",
             image.content_type,
         )
-
-        return {
-            "success": True,
-            "result": {
-                "text": text,
-            },
-        }
 
     except Exception as e:
         import traceback
@@ -96,3 +86,19 @@ async def extract_image_text(
             status_code=502,
             detail="OCR 처리 중 오류가 발생했습니다.",
         )
+
+    try:
+        event = await run_in_threadpool(extract_event_from_ocr, text) if text.strip() else None
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="OCR 텍스트에서 일정 정보를 추출하지 못했습니다.",
+        ) from exc
+
+    return {
+        "success": True,
+        "result": {
+            "text": text,
+            "event": event.model_dump(mode="json") if event is not None else None,
+        },
+    }
