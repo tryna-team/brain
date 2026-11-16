@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas.recommendation.schedule_context import ScheduleContext
+from app.schemas.recommendation.v1.schedule_context import ScheduleContext
 
 
 TemporalStatus = Literal[

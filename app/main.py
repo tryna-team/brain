@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 
 from app.api.v1.router import api_router
+from app.api.v2.router import api_router as api_v2_router
 from app.core.config import settings
 from app.core.handlers import register_exception_handlers
 from app.core.valkey_client import valkey_client
@@ -52,3 +53,4 @@ def ping() -> str:
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+app.include_router(api_v2_router, prefix=settings.api_v2_prefix)

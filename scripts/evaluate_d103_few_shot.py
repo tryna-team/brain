@@ -12,13 +12,13 @@ import time
 
 from pydantic import ValidationError
 
-from app.schemas.recommendation.refinement import LLMRefinementResponse
+from app.schemas.recommendation.v1.refinement import LLMRefinementResponse
 from app.services.recommendation.prompts.refinement_prompt import (
     FEW_SHOT_MESSAGES,
     FEW_SHOT_VERSION,
     SYSTEM_PROMPT,
 )
-from app.services.recommendation.refinement_llm_service import (
+from app.services.recommendation.v1.refinement_llm_service import (
     RefinementLLMError,
     RefinementLLMService,
 )

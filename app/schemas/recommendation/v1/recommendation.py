@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 
 from app.schemas.types import DateSource
-from app.schemas.recommendation.temporal import ItemType
+from app.schemas.recommendation.v1.temporal import ItemType
 
 
 SuggestionStatus = Literal["READY", "EMPTY", "ERROR"]

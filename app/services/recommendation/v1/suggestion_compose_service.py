@@ -1,8 +1,8 @@
-from app.schemas.recommendation.recommendation import (
+from app.schemas.recommendation.v1.recommendation import (
     RecommendationResponse,
     SuggestionItem,
 )
-from app.schemas.recommendation.temporal import TemporalValidationResult
+from app.schemas.recommendation.v1.temporal import TemporalValidationResult
 
 
 class SuggestionCompositionService:

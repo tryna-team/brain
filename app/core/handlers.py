@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -34,7 +35,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             content=ApiResponse.error(
                 code=ErrorCode.COMMON_422.name,
                 message=ErrorCode.COMMON_422.message,
-                data={"errors": exc.errors()},
+                data={"errors": jsonable_encoder(exc.errors(), custom_encoder={ValueError: str})},
             ).model_dump(),
         )
 

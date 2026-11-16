@@ -1,9 +1,9 @@
 import logging
 
-from app.schemas.recommendation.recommendation import RecommendationRequest
-from app.services.recommendation.embedding_service import EmbeddingService
+from app.schemas.recommendation.v1.recommendation import RecommendationRequest
+from app.services.recommendation.v1.embedding_service import EmbeddingService
 from app.core.exceptions import BusinessException
-from app.schemas.recommendation.schedule_context import (
+from app.schemas.recommendation.v1.schedule_context import (
     DateCandidate,
     EmbeddingMeta,
     ScheduleContext,

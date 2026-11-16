@@ -1,18 +1,18 @@
 import logging
 from time import perf_counter
 
-from app.schemas.recommendation.pipeline import PipelineStep
-from app.schemas.recommendation.recommendation import RecommendationRequest, RecommendationResponse
-from app.schemas.recommendation.schedule_context import ScheduleContextResult
-from app.schemas.recommendation.candidates import CandidateSearchResult
-from app.services.recommendation.schedule_context_service import ScheduleContextService
-from app.services.recommendation.candidate_search_service import CandidateSearchService
-from app.services.recommendation.refinement_service import RecommendationRefinementService
-from app.schemas.recommendation.refinement import RecommendationRefinementResult
-from app.schemas.recommendation.temporal import TemporalValidationResult
-from app.services.recommendation.temporal_validation_service import TemporalValidationService
-from app.services.recommendation.suggestion_compose_service import SuggestionCompositionService
-from app.services.recommendation.revision_guard_service import RevisionGuardService
+from app.schemas.recommendation.v1.pipeline import PipelineStep
+from app.schemas.recommendation.v1.recommendation import RecommendationRequest, RecommendationResponse
+from app.schemas.recommendation.v1.schedule_context import ScheduleContextResult
+from app.schemas.recommendation.v1.candidates import CandidateSearchResult
+from app.services.recommendation.v1.schedule_context_service import ScheduleContextService
+from app.services.recommendation.v1.candidate_search_service import CandidateSearchService
+from app.services.recommendation.v1.refinement_service import RecommendationRefinementService
+from app.schemas.recommendation.v1.refinement import RecommendationRefinementResult
+from app.schemas.recommendation.v1.temporal import TemporalValidationResult
+from app.services.recommendation.v1.temporal_validation_service import TemporalValidationService
+from app.services.recommendation.v1.suggestion_compose_service import SuggestionCompositionService
+from app.services.recommendation.v1.revision_guard_service import RevisionGuardService
 
 
 logger = logging.getLogger("uvicorn.error")

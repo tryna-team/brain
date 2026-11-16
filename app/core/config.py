@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     app_name: str = "Tryna Brain"
     app_env: str = "local"
     api_v1_prefix: str = "/api/v1"
+    api_v2_prefix: str = "/api/v2"
     internal_api_key: str | None = None
 
     # 로컬 OCR 개발 시 외부 서비스 연결 제어
