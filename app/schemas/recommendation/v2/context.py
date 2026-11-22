@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
@@ -51,7 +51,7 @@ class EntityResolutionV2(ResponseModelV2):
 
 
 class ContextAttributeV2(ResponseModelV2):
-    value: str | bool | int | float | None = Field(allow_inf_nan=False)
+    value: str | bool | int | Annotated[float, Field(allow_inf_nan=False)] | None
     evidence: InterpretationEvidenceV2
 
 

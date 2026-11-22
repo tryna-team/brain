@@ -1,0 +1,589 @@
+[
+  {
+    "input": {
+      "event": {
+        "title": "데베 중간고사",
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "isAllDay": false,
+        "timezone": "Asia/Seoul",
+        "place": null,
+        "description": null
+      },
+      "originalText": "데베 중간고사",
+      "parsingResult": {
+        "eventTitle": "데베 중간고사",
+        "startDate": null,
+        "dateSource": null,
+        "endDate": null,
+        "startTime": null,
+        "endTime": null,
+        "placeCandidate": null,
+        "toEmbedding": [],
+        "isAllDayCandidate": false,
+        "needsConfirmation": true,
+        "warnings": []
+      }
+    },
+    "output": {
+      "context": {
+        "activities": [
+          {
+            "activityRef": "a1",
+            "resolution": "NEW",
+            "name": "시험 응시",
+            "description": "시험 응시 활동",
+            "evidence": {
+              "source": "LLM_INFERRED",
+              "text": "데베 중간고사",
+              "uncertainty": null
+            }
+          }
+        ],
+        "entities": [
+          {
+            "entityRef": "e1",
+            "resolution": "NEW",
+            "name": "데베",
+            "kind": "SUBJECT",
+            "role": "SUBJECT",
+            "activityRefs": [
+              "a1"
+            ],
+            "identityEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "데베 중간고사",
+              "uncertainty": "정식 과목명 미확정"
+            },
+            "roleEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "데베 중간고사",
+              "uncertainty": null
+            }
+          }
+        ],
+        "attributes": {}
+      },
+      "candidates": [
+        {
+          "candidateRef": "c1",
+          "displayText": "시험 범위 확인",
+          "reason": "시험 공부의 대상을 정하기 위해 출제 범위를 확인한다.",
+          "rank": 1,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [
+            "e1"
+          ],
+          "action": {
+            "resolution": "NEW",
+            "name": "시험 범위 확인",
+            "description": "시험 공부의 대상을 정하기 위해 출제 범위를 확인한다."
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        },
+        {
+          "candidateRef": "c2",
+          "displayText": "헷갈리는 개념 정리",
+          "reason": "학업 시험을 준비하며 이해가 부족한 개념을 정리한다.",
+          "rank": 2,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [
+            "e1"
+          ],
+          "action": {
+            "resolution": "NEW",
+            "name": "헷갈리는 개념 정리",
+            "description": "학습 내용 중 이해가 부족한 개념을 정리하는 행동"
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        }
+      ],
+      "knowledgeProposals": []
+    }
+  },
+  {
+    "input": {
+      "event": {
+        "title": "데베 중간고사",
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "isAllDay": false,
+        "timezone": "Asia/Seoul",
+        "place": null,
+        "description": "시험 범위는 이미 확인했어"
+      },
+      "originalText": "데베 중간고사. 시험 범위는 이미 확인했어",
+      "parsingResult": {
+        "eventTitle": "데베 중간고사",
+        "startDate": null,
+        "dateSource": null,
+        "endDate": null,
+        "startTime": null,
+        "endTime": null,
+        "placeCandidate": null,
+        "toEmbedding": [],
+        "isAllDayCandidate": false,
+        "needsConfirmation": true,
+        "warnings": []
+      }
+    },
+    "output": {
+      "context": {
+        "activities": [
+          {
+            "activityRef": "a1",
+            "resolution": "NEW",
+            "name": "시험 응시",
+            "description": "시험 응시 활동",
+            "evidence": {
+              "source": "LLM_INFERRED",
+              "text": "데베 중간고사",
+              "uncertainty": null
+            }
+          }
+        ],
+        "entities": [
+          {
+            "entityRef": "e1",
+            "resolution": "NEW",
+            "name": "데베",
+            "kind": "SUBJECT",
+            "role": "SUBJECT",
+            "activityRefs": [
+              "a1"
+            ],
+            "identityEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "데베 중간고사",
+              "uncertainty": "정식 과목명 미확정"
+            },
+            "roleEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "데베 중간고사",
+              "uncertainty": null
+            }
+          }
+        ],
+        "attributes": {}
+      },
+      "candidates": [
+        {
+          "candidateRef": "c1",
+          "displayText": "헷갈리는 개념 정리",
+          "reason": "학업 시험을 준비하며 이해가 부족한 개념을 정리한다.",
+          "rank": 1,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [
+            "e1"
+          ],
+          "action": {
+            "resolution": "NEW",
+            "name": "헷갈리는 개념 정리",
+            "description": "학습 내용 중 이해가 부족한 개념을 정리하는 행동"
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        }
+      ],
+      "knowledgeProposals": []
+    }
+  },
+  {
+    "input": {
+      "event": {
+        "title": "온라인 면접",
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "isAllDay": false,
+        "timezone": "Asia/Seoul",
+        "place": null,
+        "description": null
+      },
+      "originalText": "온라인 면접",
+      "parsingResult": {
+        "eventTitle": "온라인 면접",
+        "startDate": null,
+        "dateSource": null,
+        "endDate": null,
+        "startTime": null,
+        "endTime": null,
+        "placeCandidate": null,
+        "toEmbedding": [],
+        "isAllDayCandidate": false,
+        "needsConfirmation": true,
+        "warnings": []
+      }
+    },
+    "output": {
+      "context": {
+        "activities": [
+          {
+            "activityRef": "a1",
+            "resolution": "NEW",
+            "name": "면접 참여",
+            "description": "면접 참여 활동",
+            "evidence": {
+              "source": "LLM_INFERRED",
+              "text": "온라인 면접",
+              "uncertainty": null
+            }
+          }
+        ],
+        "entities": [],
+        "attributes": {
+          "isOnline": {
+            "value": true,
+            "evidence": {
+              "source": "USER_CONFIRMED",
+              "text": "온라인 면접",
+              "uncertainty": null
+            }
+          }
+        }
+      },
+      "candidates": [
+        {
+          "candidateRef": "c1",
+          "displayText": "접속 링크 확인",
+          "reason": "온라인 면접에 접속할 방법을 확인한다.",
+          "rank": 1,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [],
+          "action": {
+            "resolution": "NEW",
+            "name": "접속 링크 확인",
+            "description": "온라인 면접에 접속할 방법을 확인한다."
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        },
+        {
+          "candidateRef": "c2",
+          "displayText": "마이크 상태 확인",
+          "reason": "온라인 면접에서 음성이 전달되는지 확인한다.",
+          "rank": 2,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [],
+          "action": {
+            "resolution": "NEW",
+            "name": "마이크 상태 확인",
+            "description": "온라인 면접에서 음성이 전달되는지 확인한다."
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        }
+      ],
+      "knowledgeProposals": []
+    }
+  },
+  {
+    "input": {
+      "event": {
+        "title": "팀플 회의",
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "isAllDay": false,
+        "timezone": "Asia/Seoul",
+        "place": null,
+        "description": null
+      },
+      "originalText": "팀플 회의",
+      "parsingResult": {
+        "eventTitle": "팀플 회의",
+        "startDate": null,
+        "dateSource": null,
+        "endDate": null,
+        "startTime": null,
+        "endTime": null,
+        "placeCandidate": null,
+        "toEmbedding": [],
+        "isAllDayCandidate": false,
+        "needsConfirmation": true,
+        "warnings": []
+      }
+    },
+    "output": {
+      "context": {
+        "activities": [
+          {
+            "activityRef": "a1",
+            "resolution": "NEW",
+            "name": "회의 참여",
+            "description": "회의 참여 활동",
+            "evidence": {
+              "source": "LLM_INFERRED",
+              "text": "팀플 회의",
+              "uncertainty": null
+            }
+          }
+        ],
+        "entities": [],
+        "attributes": {}
+      },
+      "candidates": [
+        {
+          "candidateRef": "c1",
+          "displayText": "얘기할 내용 정리",
+          "reason": "회의에서 논의할 내용을 정리한다.",
+          "rank": 1,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [],
+          "action": {
+            "resolution": "NEW",
+            "name": "얘기할 내용 정리",
+            "description": "회의에서 논의할 내용을 정리한다."
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        }
+      ],
+      "knowledgeProposals": []
+    }
+  },
+  {
+    "input": {
+      "event": {
+        "title": "한강 피크닉",
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "isAllDay": false,
+        "timezone": "Asia/Seoul",
+        "place": null,
+        "description": null
+      },
+      "originalText": "한강 피크닉",
+      "parsingResult": {
+        "eventTitle": "한강 피크닉",
+        "startDate": null,
+        "dateSource": null,
+        "endDate": null,
+        "startTime": null,
+        "endTime": null,
+        "placeCandidate": null,
+        "toEmbedding": [],
+        "isAllDayCandidate": false,
+        "needsConfirmation": true,
+        "warnings": []
+      }
+    },
+    "output": {
+      "context": {
+        "activities": [
+          {
+            "activityRef": "a1",
+            "resolution": "NEW",
+            "name": "피크닉",
+            "description": "피크닉 활동",
+            "evidence": {
+              "source": "LLM_INFERRED",
+              "text": "한강 피크닉",
+              "uncertainty": null
+            }
+          }
+        ],
+        "entities": [
+          {
+            "entityRef": "e1",
+            "resolution": "NEW",
+            "name": "한강",
+            "kind": "PLACE",
+            "role": "LOCATION",
+            "activityRefs": [
+              "a1"
+            ],
+            "identityEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "한강 피크닉",
+              "uncertainty": null
+            },
+            "roleEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "한강 피크닉",
+              "uncertainty": null
+            }
+          }
+        ],
+        "attributes": {}
+      },
+      "candidates": [
+        {
+          "candidateRef": "c1",
+          "displayText": "날씨 확인",
+          "reason": "야외 피크닉 계획에 영향을 주는 날씨를 확인한다.",
+          "rank": 1,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [
+            "e1"
+          ],
+          "action": {
+            "resolution": "NEW",
+            "name": "날씨 확인",
+            "description": "야외 피크닉 계획에 영향을 주는 날씨를 확인한다."
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        }
+      ],
+      "knowledgeProposals": []
+    }
+  },
+  {
+    "input": {
+      "event": {
+        "title": "부산",
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "isAllDay": false,
+        "timezone": "Asia/Seoul",
+        "place": null,
+        "description": null
+      },
+      "originalText": "부산",
+      "parsingResult": {
+        "eventTitle": "부산",
+        "startDate": null,
+        "dateSource": null,
+        "endDate": null,
+        "startTime": null,
+        "endTime": null,
+        "placeCandidate": null,
+        "toEmbedding": [],
+        "isAllDayCandidate": false,
+        "needsConfirmation": true,
+        "warnings": []
+      }
+    },
+    "output": {
+      "context": {
+        "activities": [],
+        "entities": [
+          {
+            "entityRef": "e1",
+            "resolution": "NEW",
+            "name": "부산",
+            "kind": "PLACE",
+            "role": "UNKNOWN",
+            "activityRefs": [],
+            "identityEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "부산",
+              "uncertainty": null
+            },
+            "roleEvidence": {
+              "source": "LLM_INFERRED",
+              "text": "부산",
+              "uncertainty": null
+            }
+          }
+        ],
+        "attributes": {}
+      },
+      "candidates": [],
+      "knowledgeProposals": []
+    }
+  },
+  {
+    "input": {
+      "event": {
+        "title": "세미나 발표",
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "isAllDay": false,
+        "timezone": "Asia/Seoul",
+        "place": null,
+        "description": "슬라이드는 완성했어"
+      },
+      "originalText": "세미나 발표. 슬라이드는 완성했어",
+      "parsingResult": {
+        "eventTitle": "세미나 발표",
+        "startDate": null,
+        "dateSource": null,
+        "endDate": null,
+        "startTime": null,
+        "endTime": null,
+        "placeCandidate": null,
+        "toEmbedding": [],
+        "isAllDayCandidate": false,
+        "needsConfirmation": true,
+        "warnings": []
+      }
+    },
+    "output": {
+      "context": {
+        "activities": [
+          {
+            "activityRef": "a1",
+            "resolution": "NEW",
+            "name": "발표",
+            "description": "청중에게 준비한 내용을 설명하는 활동",
+            "evidence": {
+              "source": "LLM_INFERRED",
+              "text": "세미나 발표",
+              "uncertainty": null
+            }
+          }
+        ],
+        "entities": [],
+        "attributes": {}
+      },
+      "candidates": [
+        {
+          "candidateRef": "c1",
+          "displayText": "소리 내어 발표 연습",
+          "reason": "슬라이드 작성은 완료했으므로 전달할 내용을 말로 연습한다.",
+          "rank": 1,
+          "activityRefs": [
+            "a1"
+          ],
+          "entityRefs": [],
+          "action": {
+            "resolution": "NEW",
+            "name": "발표 연습",
+            "description": "준비한 발표 내용을 말로 연습하는 행동"
+          },
+          "rule": null,
+          "timing": null,
+          "timingEvidence": null
+        }
+      ],
+      "knowledgeProposals": []
+    }
+  }
+]
