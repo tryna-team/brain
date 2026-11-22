@@ -14,8 +14,13 @@ async def verify_internal_api_key(
 ) -> None:
     if not settings.internal_api_key:
         raise BusinessException(ErrorCode.INTERNAL_AUTH_500)
+    if not settings.internal_api_key.isascii():
+        raise BusinessException(
+            ErrorCode.INTERNAL_AUTH_500,
+            "내부 API 인증 키는 ASCII 문자로 설정해야 합니다.",
+        )
 
-    if not x_internal_api_key or not secrets.compare_digest(
+    if not x_internal_api_key or not x_internal_api_key.isascii() or not secrets.compare_digest(
         x_internal_api_key,
         settings.internal_api_key,
     ):
